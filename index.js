@@ -1,6 +1,7 @@
 /**
- Latest edit : Troy Sun March 12 at 7:11 pm
+ Latest edit : Matt Kane March 16 at 4:44 pm
  */
+ /*jshint esversion: 6*/
 const cron = require("node-cron");
 const http = require("http");
 const fs = require("fs");
@@ -41,7 +42,31 @@ function job() {
                 file.on("finish", function() {
                     file.close();
                     console.log("Successfully downloaded file");
+
+                    //Import to Test DB
+                    let instream = fs.createReadStream(dlDIR +"downloaded-file-" + versionNumber +".txt");
+                    let outstream = new Stream();
+                    let date;
+                    let rl = readline.createInterface(instream, outstream);
+    
+                    //Get the timestamp from the first line of the data file
+                    rl.once("line", function (line) {
+                        date = line;
+                    });
+        
+                     // One thing I forgot, the way it is now the first line that is read by this function gets junk.
+                    // Not sure how to skip that one line.
+                    rl.on("line", function(line) {
+                        //console.log(line);
+                        let stringArr = line.split("\t");
+                        collection.insert({timeStamp : date, name: stringArr[0], newCredits : stringArr[1], sumTotal : stringArr[2], team : stringArr[3]}, {w: 1});
+                    });
+ 
+                   rl.on("close", function () {
+                        versionNumber++;
+                    });
                 });
+
             }
 
             request.setTimeout(12000, function() {
@@ -53,8 +78,8 @@ function job() {
         }); 
 
 	    //Import data to json objects
-        let instream = fs.createReadStream(dlDIR +"downloaded-file-" + versionNumber +".txt");
-        let outstream = new Stream;
+        /*let instream = fs.createReadStream(dlDIR +"downloaded-file-" + versionNumber +".txt");
+        let outstream = new Stream();
         let date;
         let rl = readline.createInterface(instream, outstream);
     
@@ -62,28 +87,25 @@ function job() {
         rl.once("line", function (line) {
             date = line;
         });
-        rl.once("line", function (line) {
-           // Skip mapping line
-        });
     
 	    // One thing I forgot, the way it is now the first line that is read by this function gets junk.
         // Not sure how to skip that one line.
         rl.on("line", function(line) {
-            //console.log(line);
+            console.log(line);
             let stringArr = line.split("\t");
             collection.insert({timeStamp : date, name: stringArr[0], newCredits : stringArr[1], sumTotal : stringArr[2], team : stringArr[3]}, {w: 1});
         });
  
        rl.on("close", function () {
             versionNumber++;
-        });
+        });*/
     });
 }
 
 job();
 
 //call the job on the 0th minute of every hour
-cron.schedule('0 * * * *', function() {
+/*cron.schedule('0 * * * *', function() {
     // Call the job
     job();
-});
+});*/

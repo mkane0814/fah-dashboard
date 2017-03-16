@@ -31,6 +31,8 @@
   "homepage": "https://github.com/devgr/fah-dashboard#readme",
   "dependencies": {
     "mongodb": "^2.2.24",
-    "node-cron": "^1.1.3"
+    "node-cron": "^1.1.3",
+    "readline" : "latest",
+    "stream" : "latest"
   }
 }
