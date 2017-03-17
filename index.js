@@ -77,28 +77,7 @@ function job() {
             console.log("Error making http request: " + err);
         }); 
 
-	    //Import data to json objects
-        /*let instream = fs.createReadStream(dlDIR +"downloaded-file-" + versionNumber +".txt");
-        let outstream = new Stream();
-        let date;
-        let rl = readline.createInterface(instream, outstream);
-    
-	    //Get the timestamp from the first line of the data file
-        rl.once("line", function (line) {
-            date = line;
-        });
-    
-	    // One thing I forgot, the way it is now the first line that is read by this function gets junk.
-        // Not sure how to skip that one line.
-        rl.on("line", function(line) {
-            console.log(line);
-            let stringArr = line.split("\t");
-            collection.insert({timeStamp : date, name: stringArr[0], newCredits : stringArr[1], sumTotal : stringArr[2], team : stringArr[3]}, {w: 1});
-        });
- 
-       rl.on("close", function () {
-            versionNumber++;
-        });*/
+	    
     });
 }
 
