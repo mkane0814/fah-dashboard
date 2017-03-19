@@ -4,7 +4,6 @@
 const http = require('http');
 const fs = require('fs');
 const readline = require('readline');
-
 var MongoClient = require('mongodb').MongoClient;
 
 const url_db = 'mongodb://localhost:27017/folding';
@@ -15,6 +14,16 @@ var months = [
 	'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
 	'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
 ];
+
+/*
+Added the script to auto create the directory if it does not exist
+*/ 
+fs.stat('./tmp/', function (err){
+    if(err) {
+        console.log("DataFiles directory does not exist. Creating ./tmp/");
+        fs.mkdir('./tmp/');
+    }
+});
 
 DownloadData(url_user, 'tmp/users.txt', StoreUserData);
 //StoreUserData();
