@@ -1,12 +1,16 @@
-// Original Author: Nathan Streyer
-// Edited by: Nicholas Matteson
+/*
 
-/* jshint esversion: 6 */
+Make sure to get rid of the createIndex statements in both updateRanks function
+after you run it for the first time, then uncomment the cron.schedule and comment
+out the two initial downloads
+
+*/
+
 
 const http = require('http');
 const fs = require('fs');
-var MongoClient = require('mongodb').MongoClient;
 const cron = require('node-cron');
+var MongoClient = require('mongodb').MongoClient;
 
 const url_db = 'mongodb://localhost:27017/folding';
 const url_user = 'http://fah-web.stanford.edu/daily_user_summary.txt';
@@ -17,225 +21,299 @@ var months = [
 	'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
 ];
 
-// made this synchronous so it gets done right away
-if (fs.statSync('./tmp/') === null) {
-		console.log('tmp directory does not exist. Creating ./tmp/');
-    fs.mkdir('./tmp/');
-}
+if (!fs.statSync('tmp'))
+    fs.mkdir('tmp');
 
-// initial download and store functions
-DownloadData(url_team, 'tmp/teams.txt', StoreTeamData);
-DownloadData(url_user, 'tmp/users.txt', StoreUserData);
+// for first run only
+DownloadUserData();
+DownloadTeamData();
 
-// making the scheduled task to run DownloadData, StoreUserData, and StoreTeamData
-cron.schedule('0 * * * *', function () {
-	DownloadData(url_user, 'tmp/users.txt', StoreUserData);
-	DownloadData(url_team, 'tmp/teams.txt', StoreTeamData);
+/*
+cron.schedule('0 * * * *', function() {
+	DownloadUserData();
+	DownloadTeamData();
 });
+*/
 
-
-
-function DownloadData(url, path, cb)
+function DownloadUserData()
 {
-	http.get(url, function(res) {
+	http.get(url_user, function(res) {
 		if (res.statusCode !== 200) {
-			console.log('HTTP request failed');
+			console.log('HTTP request for user data failed');
 			return;
 		}
     
-		let file = fs.createWriteStream(path);
-		console.log('Getting new data');
+		let file = fs.createWriteStream('tmp/users.txt');
+		console.log('Getting new user data');
 		res.setEncoding('utf8');
 		res.on('data', function(chunk) {
 			file.write(chunk);
 		});
 		res.on('end', function() {
-			console.log('Data downloaded successfully');
+			console.log('User data downloaded successfully');
 			file.close();
-			return cb();
+			StoreUserData();
 		});
-	});
+	})
 }
-
-/*
-The advantage to this is that putting recursive calls in the callback ensures that the docs
-are inserted into the db in order. I got this idea from http://metaduck.com/01-asynchronous-iteration-patterns.html
-*/
 
 function StoreUserData()
 {
 	MongoClient.connect(url_db, function(err, db) {
 		if (err) return console.log('Failed to connect to the database');
-		console.log('Connected successfully to the database');
-		
-          // DEBUGGING ONLY REMOVE IN THE FUTURE
-          // db.dropCollection('users');
 
 		var users = db.collection('users');
-		var newData = fs.readFileSync('tmp/users.txt', 'utf8');		// read entire file to memory
+		var newData = fs.readFileSync('tmp/users.txt', 'utf8');			// read file into memory
 		var date = new Date(
-			parseInt(newData.slice(24, 28)),					// year
-			months.indexOf(newData.slice(4, 7)),			// month
-			parseInt(newData.slice(8, 10)),						// date
-			parseInt(newData.slice(11, 13)),					// hours
-			parseInt(newData.slice(14, 16)),					// minutes
-			parseInt(newData.slice(17, 19))						// seconds
+			parseInt(newData.slice(24, 28)),						// year
+			months.indexOf(newData.slice(4, 7)),				// month
+			parseInt(newData.slice(8, 10)),							// date
+			parseInt(newData.slice(11, 13)),						// hours
+			parseInt(newData.slice(14, 16)),						// minutes
+			parseInt(newData.slice(17, 19))							// seconds
 		);
 
-		newData = newData.slice(60).split('\n');	// slice header off, split into lines
-		var length = newData.length - 2;		// last line is blank
+		newData = newData.slice(60).split('\n');				// slice header off, split into lines
+		var length = newData.length - 2;								// last line is blank
 
-          // index creation for possible optimization of insertion/searches (not yet utilized)
-          // users.createIndex({ name : 1, teamID : 1 });
-
+		console.log('Storing new user data');
 		
+		// recursive for serial insertion of each user's data
 		(function InsertOrUpdate(i) {
-			var user = newData[i].split('\t');	// split line into fields
-			user[1] = parseInt(user[1]);		// get score as int
-			user[2] = parseInt(user[2]);		// ... units
-			user[3] = parseInt(user[3]);		// ... teamID
-			
-			// see if the user is already in the db, returns null doc if not
-			users.findOne({ _id: { name: user[0], teamID: user[3] } }, function(err, doc) {
-				if (err) {
-					console.log(err.message);
-					if (i < length) return InsertOrUpdate(i + 1);	// don't stop if error
-					else {
-							db.close();
-							console.log('User data added successfully');
+			if (i < length)															// if we haven't reached end
+			{
+				var user = newData[i].split('\t');				// split line into fields
+				user[1] = parseInt(user[1]);							// get score as int
+				user[2] = parseInt(user[2]);							// ... units
+				user[3] = parseInt(user[3]);							// ... teamID
+				
+				// if user is already in db, return their doc, else return null doc
+				users.findOne({ _id: { name: user[0], teamID: user[3] } }, function(err, doc) {
+					if (err) {
+						console.log(err.message);			// log error and keep going
+						InsertOrUpdate(i + 1);
+					} else if (doc) {								// update existing doc
+						doc.hourly.push({
+							score: doc.score,						// add entry to hourly history
+							rank: doc.rank,
+							date: doc.date
+						});
+						doc.score = user[1];					// update fields with new data
+						doc.units = user[2];
+						doc.date = date;
+						
+						// replace the old doc with the new one
+						users.replaceOne({ _id: { name: user[0], teamID: user[3] } }, doc, function(err, doc) {
+							if (err) console.log(err.message);
+							InsertOrUpdate(i + 1);									// recursive call for next user
+						});
+					} else {																		// insert a doc for new user
+						users.insertOne({
+							_id: {
+								name: user[0],
+								teamID: user[3]
+							},
+							score: user[1],
+							units: user[2],
+							date: date,
+							rank: null,
+							scoreChange: null,
+							rankChange: null,
+							hourly: [],
+							daily: []
+						}, function(err, result) {
+							if (err) console.log(err.message);
+							InsertOrUpdate(i + 1);										// recursive call for next user
+						});
 					}
-				} else if (doc) {
-					doc.hourly.push({			// if found, update doc
-						score: doc.score,		// add score, rank, date to hourly history
-						rank: doc.rank,			// do this first because about to overwrite
-						date: doc.date
-					});
-					while (date - doc.hourly[0].date > 88200000)	// get rid of hourly data older than 1 day
-						doc.hourly.shift();
-					doc.score = user[1];			// update fields based on new data
-					doc.units = user[2];
-					doc.date = date;
-					doc.scoreChange = doc.score - doc.hourly[0].score;
-					
-					// replace the old doc with the new one we just created from the old one
-					users.replaceOne({ _id: { name: user[0], teamID: user[3] } }, doc, function(err, doc) {
-						if (err) console.log(err.message);
-						if (i < length) return InsertOrUpdate(i + 1);		// recursive call to insert next
-						else {
-							db.close();
-							console.log('User data added successfully');
-						}
-					});
-				} else {
-					users.insertOne({			// insert new doc for users who aren't in db
-						_id: {
-							name: user[0],
-							teamID: user[3]
-						},
-						score: user[1],
-						units: user[2],
-						date: date,
-						rank: null,
-						rankChange: null,
-						scoreChange: null,
-						hourly: [],
-						daily: []
-					}, function(err, result) {
-						if (err) console.log(err.message);
-						if (i < length) return InsertOrUpdate(i + 1);
-						else {
-							db.close();
-							console.log('User data added successfully');
-						}
-					});
-				}
-			});
-		})(0);
+				});
+			}
+			else
+				UpdateUserRank(db, date);												// base case
+		})(0)
 	});
+}
+
+function UpdateUserRank(db, date)
+{
+	var users = db.collection('users');
+	users.createIndex({ score: -1 });									// RUN THIS THE FIRST TIME ONLY
+	var cursor = users.find().sort({ score: -1 });		// iterate in descending order of points
+	var i = 1;																				// rank
+	
+	console.log('Updating user ranks');
+	
+	// recursive for serial insertion of rank
+	(function UpdateOne(cursor) {
+		cursor.next(function(err, doc) {
+			if (err) {
+				console.log(err.message);						// log error and keep going
+				i++;
+				UpdateOne(cursor);
+			} else if (doc) {
+				doc.rank = i;
+				try {																									// get rid of hourly data older than 24 hours
+					while (date - doc.hourly[0].date > 88200000)				// fails if hourly is empty, so catch that
+						doc.hourly.shift();																// exception and ignore it
+				} catch(e) {}
+				if (doc.hourly.length > 0) {														// update based on oldest data in hourly history
+					doc.scoreChange = doc.score - doc.hourly[0].score;
+					doc.rankChange = doc.rank - doc.hourly[0].rank;
+				} else {																								// assign to null if no hourly history present
+					doc.scoreChange = null;
+					doc.rankChange = null;
+				}
+				
+				// replace the old doc with the new one
+				users.replaceOne( { _id : { name : doc._id.name, teamID : doc._id.teamID } }, doc, function(err, doc) {
+					if (err) console.log(err.message);
+					i++;
+					UpdateOne(cursor);													// recursive call for next user
+				});
+			} else {
+				console.log('User ranks updated successfully');			// finished with users
+				console.log('Hourly update for users complete');
+				db.close();
+			}
+		});
+	})(cursor);
+}
+
+function DownloadTeamData()
+{
+	http.get(url_team, function(res) {
+		if (res.statusCode !== 200) {
+			console.log('HTTP request for team data failed');
+			return;
+		}
+    
+		let file = fs.createWriteStream('tmp/teams.txt');
+		console.log('Getting new team data');
+		res.setEncoding('utf8');
+		res.on('data', function(chunk) {
+			file.write(chunk);
+		});
+		res.on('end', function() {
+			console.log('Team data downloaded successfully');
+			file.close();
+			StoreTeamData();
+		});
+	})
 }
 
 function StoreTeamData()
 {
 	MongoClient.connect(url_db, function(err, db) {
 		if (err) return console.log('Failed to connect to the database');
-		console.log('Connected successfully to the database');
 		
 		var teams = db.collection('teams');
-		var newData = fs.readFileSync('tmp/teams.txt', 'utf8');		// read entire file to memory
+		var newData = fs.readFileSync('tmp/teams.txt', 'utf8');			// read file into memory
 		var date = new Date(
-			parseInt(newData.slice(24, 28)),					// year
-			months.indexOf(newData.slice(4, 7)),			// month
-			parseInt(newData.slice(8, 10)),						// date
-			parseInt(newData.slice(11, 13)),					// hours
-			parseInt(newData.slice(14, 16)),					// minutes
-			parseInt(newData.slice(17, 19))						// seconds
+			parseInt(newData.slice(24, 28)),						// year
+			months.indexOf(newData.slice(4, 7)),				// month
+			parseInt(newData.slice(8, 10)),							// date
+			parseInt(newData.slice(11, 13)),						// hours
+			parseInt(newData.slice(14, 16)),						// minutes
+			parseInt(newData.slice(17, 19))							// seconds
 		);
 		
-		newData = newData.slice(52).split('\n');			// slice header off, split into lines
-		var length = newData.length - 2;							// last line is blank
+		newData = newData.slice(52).split('\n');				// slice header off, split into lines
+		var length = newData.length - 2;								// last line is blank
 		
+		console.log('Storing new team data');
+		
+		// recursive for serial insertion of each team's data
 		(function InsertOrUpdate(i) {
-			var team = newData[i].split('\t');					// split line into fields
-			team[0] = parseInt(team[0]);								// get id as int
-			team[2] = parseInt(team[2]);								// ... score
-			team[3] = parseInt(team[3]);								// ... units
-			
-			// see if the team is already in the db, returns null doc if not
-			teams.findOne({ _id: team[1] }, function(err, doc) {
-				if (err) {
-					console.log(err.message);
-					if (i < length) return InsertOrUpdate(i + 1);	// don't stop if error
-					else {
-							db.close();
-							console.log('Team data added successfully');
-							DownloadData(url_user, 'tmp/users.txt', StoreUserData);
+			if (i < length)															// if we haven't reached end
+			{
+				var team = newData[i].split('\t');				// split line into fields
+				team[0] = parseInt(team[0]);							// get id as int
+				team[2] = parseInt(team[2]);							// ... score
+				team[3] = parseInt(team[3]);							// ... units
+				
+				// if team is already in db, return their doc, else return null doc
+				teams.findOne({ _id: team[1] }, function(err, doc) {
+					if (err) {
+						console.log(err.message);			// log error and keep going
+						InsertOrUpdate(i + 1);
+					} else if (doc) {								// update existing doc
+						doc.hourly.push({
+							score: doc.score,						// add entry to hourly history
+							rank: doc.rank,
+							date: doc.date
+						});
+						doc.score = team[2];					// update fields with new data
+						doc.units = team[3];
+						doc.date = date;
+						
+						// replace the old doc with the new one
+						teams.replaceOne({ _id: team[1] }, doc, function(err, doc) {
+							if (err) console.log(err.message);
+							InsertOrUpdate(i + 1);									// recursive call for next team
+						});
+					} else {																		// insert a doc for new team
+						teams.insertOne({
+							_id: team[1],
+							ID: team[0],
+							score: team[2],
+							units: team[3],
+							date: date,
+							rank: null,
+							scoreChange: null,
+							rankChange: null,
+							hourly: [],
+							daily: []
+						}, function(err, result) {
+							if (err) console.log(err.message);
+							InsertOrUpdate(i + 1)										// recursive call for next team
+						});
 					}
-				} else if (doc) {
-					doc.hourly.push({			// if found, update doc
-						score: doc.score,		// add score, rank, date to hourly history
-						rank: doc.rank,			// do this first because about to overwrite
-						date: doc.date
-					});
-					while (date - doc.hourly[0].date > 88200000)	// get rid of hourly data older than 1 day
-						doc.hourly.shift();
-					doc.score = team[2];			// update fields based on new data
-					doc.units = team[3];
-					doc.date = date;
-					doc.scoreChange = doc.score - doc.hourly[0].score;
-					
-					// replace the old doc with the new one we just created from the old one
-					teams.replaceOne({ _id: team[1] }, doc, function(err, doc) {
-						if (err) console.log(err.message);
-						if (i < length) return InsertOrUpdate(i + 1);		// recursive call to insert next
-						else {
-							db.close();
-							console.log('Team data added successfully');
-							DownloadData(url_user, 'tmp/users.txt', StoreUserData);
-						}
-					});
-				} else {
-					teams.insertOne({			// insert new doc for teams who aren't in db
-						_id: team[1],
-						ID: team[0],
-						score: team[2],
-						units: team[3],
-						date: date,
-						rank: null,
-						rankChange: null,
-						scoreChange: null,
-						hourly: [],
-						daily: []
-					}, function(err, result) {
-						if (err) console.log(err.message);
-						if (i < length) return InsertOrUpdate(i + 1);
-						else {
-							db.close();
-							console.log('Team data added successfully');
-							DownloadData(url_user, 'tmp/users.txt', StoreUserData);
-						}
-					});
-				}
-			});
-		})(0);
+				});
+			}
+			else
+				UpdateTeamRank(db, date);											// base case
+		})(0)
 	});
+}
+
+function UpdateTeamRank(db, date)
+{
+	var teams = db.collection('teams');
+	teams.createIndex({ score: -1 });									// RUN THIS THE FIRST TIME ONLY
+	var cursor = teams.find().sort({ score: -1 });		// iterate in descending order of points
+	var i = 1;																				// rank
+	
+	console.log('Updating team ranks');
+	
+	(function UpdateOne(cursor) {
+		cursor.next(function(err, doc) {
+			if (err) {
+				console.log(err.message);
+				i++;
+				UpdateOne(cursor);
+			} else if (doc) {
+				doc.rank = i;
+				try {																									// get rid of hourly data older than 24 hours
+					while (date - doc.hourly[0].date > 88200000)				// fails if hourly is empty, so catch that
+						doc.hourly.shift();																// exception and ignore it
+				} catch(e) {}
+				if (doc.hourly.length > 0) {														// update based on oldest data in hourly history
+					doc.scoreChange = doc.score - doc.hourly[0].score;
+					doc.rankChange = doc.rank - doc.hourly[0].rank;
+				} else {																								// assign to null if no hourly history present
+					doc.scoreChange = null;
+					doc.rankChange = null;
+				}
+				teams.replaceOne( { _id : doc._id }, doc, function(err, doc) {
+					if (err) console.log(err.message);
+					i++;
+					UpdateOne(cursor);													// recursive call for next team
+				});
+			} else {
+				console.log('Team ranks updated successfully');			// finished with users
+				console.log('Hourly update for teams complete');
+				db.close();
+			}
+		});
+	})(cursor);
 }
