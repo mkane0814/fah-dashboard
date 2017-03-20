@@ -61,7 +61,7 @@ function StoreUserData()
 		console.log('Connected successfully to the database');
 		
           // DEBUGGING ONLY REMOVE IN THE FUTURE
-          db.dropCollection('users');
+          // db.dropCollection('users');
 
 		var users = db.collection('users');
 		var newData = fs.readFileSync('tmp/users.txt', 'utf8');		// read entire file to memory
@@ -78,7 +78,7 @@ function StoreUserData()
 		var length = newData.length - 2;		// last line is blank
 
           // index creation for possible optimization of insertion/searches (not yet utilized)
-          users.createIndex({ name : 1, teamID : 1 });
+          // users.createIndex({ name : 1, teamID : 1 });
 
 		
 		(function InsertOrUpdate(i) {
@@ -88,10 +88,14 @@ function StoreUserData()
 			user[3] = parseInt(user[3]);		// ...
 			
 			// see if the user is already in the db, returns null doc if not
-			users.findOne({ name: user[0], teamID: user[3] }, function(err, doc) {
+			users.findOne({ _id: { name: user[0], teamID: user[3] } }, function(err, doc) {
 				if (err) {
 					console.log(err.message);
-					if (i < length) InsertOrUpdate(i + 1);	// don't stop if error
+					if (i < length) return InsertOrUpdate(i + 1);	// don't stop if error
+					else {
+							db.close();
+							console.log('User data added successfully');
+					}
 				} else if (doc) {
 					doc.hourly.push({			// if found, update doc
 						score: doc.score,		// add score, rank, date to hourly history
@@ -106,16 +110,22 @@ function StoreUserData()
 					doc.scoreChange = doc.score - doc.hourly[0].score;
 					
 					// replace the old doc with the new one we just created from the old one
-					users.replaceOne({ name: user[0], teamID: user[3] }, doc, function(err, doc) {
+					users.replaceOne({ _id: { name: user[0], teamID: user[3] } }, doc, function(err, doc) {
 						if (err) console.log(err.message);
-						if (i < length) InsertOrUpdate(i + 1);		// recursive call to insert next
+						if (i < length) return InsertOrUpdate(i + 1);		// recursive call to insert next
+						else {
+							db.close();
+							console.log('User data added successfully');
+						}
 					});
 				} else {
 					users.insertOne({			// insert new doc for users who aren't in db
-						name: user[0],
+						_id: {
+							name: user[0],
+							teamID: user[3]
+						},
 						score: user[1],
 						units: user[2],
-						teamID: user[3],
 						date: date,
 						rank: null,
 						rankChange: null,
@@ -124,7 +134,11 @@ function StoreUserData()
 						daily: []
 					}, function(err, result) {
 						if (err) console.log(err.message);
-						if (i < length) InsertOrUpdate(i + 1);
+						if (i < length) return InsertOrUpdate(i + 1);
+						else {
+							db.close();
+							console.log('User data added successfully');
+						}
 					});
 				}
 			});
