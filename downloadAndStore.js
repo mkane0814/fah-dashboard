@@ -74,7 +74,7 @@ function StoreUserData()
 		);
 
 		newData = newData.slice(60).split('\n');				// slice header off, split into lines
-		var length = newData.length - 2;								// last line is blank
+		var length = newData.length - 1;								// last line is blank
 
 		console.log('Storing new user data');
 		
