@@ -3,7 +3,6 @@
 
 const http = require('http');
 const fs = require('fs');
-const readline = require('readline');
 var MongoClient = require('mongodb').MongoClient;
 
 const url_db = 'mongodb://localhost:27017/folding';
