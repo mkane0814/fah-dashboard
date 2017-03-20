@@ -1,9 +1,12 @@
 // Original Author: Nathan Streyer
 // Edited by: Nicholas Matteson
 
+/* jshint esversion: 6 */
+
 const http = require('http');
 const fs = require('fs');
 var MongoClient = require('mongodb').MongoClient;
+const cron = require('node-cron');
 
 const url_db = 'mongodb://localhost:27017/folding';
 const url_user = 'http://fah-web.stanford.edu/daily_user_summary.txt';
@@ -15,13 +18,22 @@ var months = [
 ];
 
 // made this synchronous so it gets done right away
-if (fs.statSync('./tmp/') == null) {
+if (fs.statSync('./tmp/') === null) {
 		console.log('tmp directory does not exist. Creating ./tmp/');
     fs.mkdir('./tmp/');
 }
 
-// the team data handling is called from the StoreTeamData function as a cb
+// initial download and store functions
 DownloadData(url_team, 'tmp/teams.txt', StoreTeamData);
+DownloadData(url_user, 'tmp/users.txt', StoreUserData);
+
+// making the scheduled task to run DownloadData, StoreUserData, and StoreTeamData
+cron.schedule('0 * * * *', function () {
+	DownloadData(url_user, 'tmp/users.txt', StoreUserData);
+	DownloadData(url_team, 'tmp/teams.txt', StoreTeamData);
+});
+
+
 
 function DownloadData(url, path, cb)
 {
@@ -42,7 +54,7 @@ function DownloadData(url, path, cb)
 			file.close();
 			return cb();
 		});
-	})
+	});
 }
 
 /*
@@ -138,7 +150,7 @@ function StoreUserData()
 					});
 				}
 			});
-		})(0)
+		})(0);
 	});
 }
 
@@ -224,6 +236,6 @@ function StoreTeamData()
 					});
 				}
 			});
-		})(0)
+		})(0);
 	});
 }
