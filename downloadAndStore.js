@@ -1,3 +1,6 @@
+/*jshint esversion: 6*/
+
+
 const http = require('http');
 const fs = require('fs');
 const cron = require('node-cron');
@@ -15,9 +18,17 @@ var months = [
 	'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
 ];
 
+try {
+	fs.statSync('tmp');
+}
+catch(err) {
+	fs.mkdir('tmp');
+}
+
+/*
 if (!fs.statSync('tmp'))
 	fs.mkdir('tmp');
-
+*/
 
 
 /*
@@ -30,7 +41,7 @@ DownloadTeamData();
 
 // schedule hourly and/or daily updates
 
-cron.schedule('45 * * * *', function() {
+cron.schedule('20 * * * *', function() {
 	DownloadUserData();
 	DownloadTeamData();
 });
@@ -56,7 +67,7 @@ function DownloadUserData()
 			file.close();
 			StoreUserData();
 		});
-	})
+	});
 }
 
 function StoreUserData()
@@ -133,7 +144,7 @@ function StoreUserData()
 				console.log('User data stored successfully');
 				UpdateUserData(db, date);												// base case
 			}
-		})(0)
+		})(0);
 	});
 }
 
@@ -222,7 +233,7 @@ function DownloadTeamData()
 			file.close();
 			StoreTeamData();
 		});
-	})
+	});
 }
 
 function StoreTeamData()
@@ -289,7 +300,7 @@ function StoreTeamData()
 							daily: []
 						}, function(err, result) {
 							if (err) console.log(err.message);
-							HandleOneTeam(i + 1)										// recursive call for next team
+							HandleOneTeam(i + 1);										// recursive call for next team
 						});
 					}
 				});
@@ -297,7 +308,7 @@ function StoreTeamData()
 				console.log('Team data stored successfully');
 				UpdateTeamData(db, date);											// base case
 			}
-		})(0)
+		})(0);
 	});
 }
 
