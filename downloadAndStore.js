@@ -1,8 +1,8 @@
 /*
 
-Make sure to get rid of the createIndex statements in both updateRanks function
-after you run it for the first time. If you drop all the users/teams from the
-collections, you will want to include them for the first run again.
+Make sure to get rid of the createIndex statements in both of the updateRanks 
+functions after you run it for the first time. If you drop all the users/teams 
+from the collections, you will want to include them for the first run again.
 
 */
 
