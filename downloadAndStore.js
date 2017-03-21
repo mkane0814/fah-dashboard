@@ -1,8 +1,8 @@
 /*
 
 Make sure to get rid of the createIndex statements in both updateRanks function
-after you run it for the first time, then uncomment the cron.schedule and comment
-out the two initial downloads
+after you run it for the first time. If you drop all the users/teams from the
+collections, you will want to include them for the first run again.
 
 */
 
@@ -24,14 +24,31 @@ var months = [
 if (!fs.statSync('tmp'))
     fs.mkdir('tmp');
 
-// for first run only
+// to run hourly update once
+
 DownloadUserData();
 DownloadTeamData();
 
-/*
-cron.schedule('0 * * * *', function() {
+
+/* to run daily update once
+
+StoreUserDailyHistory();
+StoreTeamDailyHistory();
+*/
+
+/* to schedule hourly updates
+
+cron.schedule('25 * * * *', function() {
 	DownloadUserData();
 	DownloadTeamData();
+});
+*/
+
+/* to schedule daily updates
+
+cron.schedule('55 0 * * *', function() {
+	StoreUserDailyHistory();
+	StoreTeamDailyHistory();
 });
 */
 
@@ -165,7 +182,9 @@ function UpdateUserRank(db, date)
 				}
 				
 				// replace the old doc with the new one
-				users.replaceOne( { _id : { name : doc._id.name, teamID : doc._id.teamID } }, doc, function(err, doc) {
+				users.replaceOne({
+					_id : { name : doc._id.name, teamID : doc._id.teamID }
+				}, doc, function(err, doc) {
 					if (err) console.log(err.message);
 					i++;
 					UpdateOne(cursor);													// recursive call for next user
@@ -316,4 +335,78 @@ function UpdateTeamRank(db, date)
 			}
 		});
 	})(cursor);
+}
+
+function StoreUserDailyHistory()
+{
+	MongoClient.connect(url_db, function(err, db) {
+		if (err) return console.log('Failed to connect to the database');
+		
+		users = db.collection('users');
+		cursor = users.find();
+		
+		console.log('Updating daily history for users');
+		
+		(function StoreUserDaily(cursor) {
+			cursor.next(function(err, doc) {
+				if (err) {
+					console.log(err.message);
+					StoreUserDaily(cursor);
+				} else if (doc) {
+					doc.daily.push({
+						score: doc.score,
+						rank: doc.rank,
+						scoreChange: doc.scoreChange,
+						rankChange: doc.rankChange,
+						date: doc.date
+					});
+					users.replaceOne({
+						_id : { name : doc._id.name, teamID : doc._id.teamID }
+					}, doc, function(err, doc) {
+						if (err) console.log(err.message);
+						StoreUserDaily(cursor);
+					});
+				} else {
+					console.log('Daily update for users complete');
+					db.close();
+				}
+			});
+		})(cursor);
+	});
+}
+
+function StoreTeamDailyHistory()
+{
+	MongoClient.connect(url_db, function(err, db) {
+		if (err) return console.log('Failed to connect to the database');
+		
+		teams = db.collection('teams');
+		cursor = teams.find();
+		
+		console.log('Updating daily history for teams');
+		
+		(function StoreTeamDaily(cursor) {
+			cursor.next(function(err, doc) {
+				if (err) {
+					console.log(err.message);
+					StoreTeamDaily(cursor);
+				} else if (doc) {
+					doc.daily.push({
+						score: doc.score,
+						rank: doc.rank,
+						scoreChange: doc.scoreChange,
+						rankChange: doc.rankChange,
+						date: doc.date
+					});
+					teams.replaceOne({ _id : doc._id }, doc, function(err, doc) {
+						if (err) console.log(err.message);
+						StoreTeamDaily(cursor);
+					});
+				} else {
+					console.log('Daily update for teams complete');
+					db.close();
+				}
+			});
+		})(cursor);
+	});
 }
