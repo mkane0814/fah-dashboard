@@ -2,7 +2,6 @@
 
 const http = require('http');
 const async = require('async');
-const cron = require('node-cron');
 var MongoClient = require('mongodb').MongoClient;
 
 const url_db = 'mongodb://localhost:27017/folding';
@@ -28,7 +27,7 @@ MongoClient.connect(url_db, function(err, db) {
 			var refs = [];
 			for (var i = 0; i < teams.length; i++) {
 				map.set(teams[i]._id, teams[i]);
-				refs.push(teams[i])
+				refs.push(teams[i]);
 			}
 			
 			http.get(url_team, function(res) {
