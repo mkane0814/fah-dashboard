@@ -7,7 +7,8 @@ var MongoClient = require('mongodb').MongoClient;
 const url_db = 'mongodb://localhost:27017/folding';
 const url_team = 'http://fah-web.stanford.edu/daily_team_summary.txt';
 
-var lastDailyUpdate = new Date();
+// Get the last daily team update from the parent process
+var lastDailyUpdate = process.env.lastDailyTeamUpdate;//new Date();
 
 var months = [
 	'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -182,6 +183,7 @@ MongoClient.connect(url_db, function(err, db) {
 						console.log('Team documents stored successfully');
 						console.log('Hourly update for teams complete');
 						if (daily) {
+							// Notify parent of changed date
 							console.log('Daily update for teams complete');
 							lastDailyUpdate = new Date(
 								timeStamp.getFullYear(),

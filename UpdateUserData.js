@@ -7,7 +7,8 @@ var MongoClient = require('mongodb').MongoClient;
 const url_db = 'mongodb://localhost:27017/folding';
 const url_user = 'http://fah-web.stanford.edu/daily_user_summary.txt';
 
-var lastDailyUpdate = new Date();
+// Get the last daily user update from the parent process
+var lastDailyUpdate = process.env.lastDailyUserUpdate;//new Date();
 
 var months = [
 	'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
