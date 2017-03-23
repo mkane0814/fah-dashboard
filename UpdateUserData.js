@@ -28,7 +28,7 @@ MongoClient.connect(url_db, function(err, db) {
 			var refs = [];
 			for (var i = 0; i < users.length; i++) {
 				var key = users[i]._id.name + users[i]._id.teamID;
-				userMap.set(key, users[i]);
+				map.set(key, users[i]);
 				refs.push(users[i]);
 			}
 			
