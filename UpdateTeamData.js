@@ -15,6 +15,8 @@ var months = [
 	'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
 ];
 
+console.log("Connecting to database...");
+
 MongoClient.connect(url_db, function(err, db) {
 	if (err) return console.log(err.message);
 	
@@ -184,12 +186,7 @@ MongoClient.connect(url_db, function(err, db) {
 						console.log('Hourly update for teams complete');
 						if (daily) {
 							// Notify parent of changed date
-							console.log('Daily update for teams complete');
-							lastDailyUpdate = new Date(
-								timeStamp.getFullYear(),
-								timeStamp.getMonth(),
-								timeStamp.getDate()
-							);
+							console.log('UPDATE DATE');
 						}
 					});
 				});

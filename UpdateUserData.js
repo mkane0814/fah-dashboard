@@ -189,12 +189,8 @@ MongoClient.connect(url_db, function(err, db) {
 						console.log('User documents stored successfully');
 						console.log('Hourly update for users complete');
 						if (daily) {
-							console.log('Daily update for users complete');
-							lastDailyUpdate = new Date(
-								timeStamp.getFullYear(),
-								timeStamp.getMonth(),
-								timeStamp.getDate()
-							);
+                            // Notify parent of changed date
+                            console.log('UPDATE DATE');
 						}
 					});
 				});
