@@ -131,7 +131,7 @@ MongoClient.connect(url_db, function(err, db) {
 							doc.rankChange = null;
 							
 							while (doc.hourly.length > 0) {
-								if (teamDate - doc.hourly[0].date > 88200000)
+								if (timeStamp - doc.hourly[0].date > 88200000)
 									doc.hourly.shift();
 								else {
 									doc.scoreChange = doc.score - doc.hourly[0].score;
