@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-node --max-old-space-size=4096 index.js
+node --max_old_space_size=4096 index.js

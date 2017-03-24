@@ -23,7 +23,7 @@ cron.schedule('0 * * * *', function() {
 	};
 
 	// Start the download user task on a child process
-	downloadUserTask = child_process.exec("node UpdateUserData.js",
+	downloadUserTask = child_process.exec("node --max-old-space-size=4096 UpdateUserData.js",
 		{env: env },
 		function(error, stdout, stderr) {
 			if (error) {
@@ -56,7 +56,7 @@ cron.schedule('0 * * * *', function() {
 	});
 
 	// Start the download team task on a child process
-	downloadTeamTask = child_process.exec("node UpdateTeamData.js",
+	downloadTeamTask = child_process.exec("node --max-old-space-size=2048 UpdateTeamData.js",
 		{env: {lastDailyTeamUpdate: lastDailyTeamUpdate}},
 		function(error, stdout, stderr) {
 			if (error) {
