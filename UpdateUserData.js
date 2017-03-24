@@ -47,7 +47,7 @@ http.get(url_user, function(res) {
 			}, function(err, result) {
 				if (err) console.log(err.message);
 				
-				var daily = timeStamp - result.date > 86400000;
+				var daily = timeStamp - result.date > 84600000;
 				
 				console.log('Processing new user data');
 				
@@ -177,11 +177,10 @@ http.get(url_user, function(res) {
 						}, function(err) {
 							console.log('Hourly update for users complete');
 							if (daily) {
-								var lastDailyUpdate = timeStamp + 1800000;
 								db.collection('lastDailyUpdates').findOneAndUpdate({
 									_id : 'lastDailyUserUpdate'
 								}, {
-									$set : { date : lastDailyUpdate }
+									$set : { date : timeStamp }
 								}, function(err, result) {
 									console.log('Daily update for users complete');
 									db.close();
