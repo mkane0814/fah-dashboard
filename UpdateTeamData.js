@@ -7,126 +7,97 @@ var MongoClient = require('mongodb').MongoClient;
 const url_db = 'mongodb://localhost:27017/folding';
 const url_team = 'http://fah-web.stanford.edu/daily_team_summary.txt';
 
-// Get the last daily team update from the parent process
-var lastDailyUpdate = process.env.lastDailyTeamUpdate;//new Date();
-
 var months = [
 	'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
 	'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
 ];
 
-console.log("Connecting to database...");
-
-MongoClient.connect(url_db, function(err, db) {
-	if (err) return console.log(err.message);
+http.get(url_team, function(res) {
+	if (res.statusCode !== 200) {
+		console.log('HTTP request for team data failed');
+		return;
+	}
 	
-	db.collection('teams').ensureIndex({ score : -1 }, function(err, result) {
-		if (err) console.log(err.message);
-		
-		db.collection('teams').find().sort({ score : -1 }).toArray(function(err, teams) {
+	var newData = '';
+	console.log('Downloading new team data');
+	res.setEncoding('utf8');
+	res.on('data', function(chunk) {
+		newData += chunk;
+	});
+	res.on('end', function() {
+		MongoClient.connect(url_db, function(err, db) {
 			if (err) return console.log(err.message);
 			
-			var map = new Map();
-			var refs = [];
-			for (var i = 0; i < teams.length; i++) {
-				map.set(teams[i]._id, teams[i]);
-				refs.push(teams[i]);
-			}
+			var timeStamp = new Date(
+				parseInt(newData.slice(24, 28)),
+				months.indexOf(newData.slice(4, 7)),
+				parseInt(newData.slice(8, 10)),
+				parseInt(newData.slice(11, 13)),
+				parseInt(newData.slice(14, 16)),
+				parseInt(newData.slice(17, 19))
+			);
 			
-			http.get(url_team, function(res) {
-				if (res.statusCode !== 200) {
-					console.log('HTTP request for team data failed');
-					return;
-				}
+			db.collection('lastDailyUpdates').findOneAndUpdate({
+				_id : 'lastDailyTeamUpdate'
+			}, {
+				$setOnInsert : { _id : 'lastDailyTeamUpdate', date : timeStamp }
+			}, {
+				upsert : true
+			}, function(err, result) {
+				if (err) console.log(err.message);
 				
-				var newData = '';
-				console.log('Downloading new team data');
-				res.setEncoding('utf8');
-				res.on('data', function(chunk) {
-					newData += chunk;
-				});
-				res.on('end', function() {
-					console.log('New team data downloaded successfully');
+				var daily;
+				if (result)
+					daily = timeStamp - result.date > 86400000;
+				else
+					daily = false;
+				
+				console.log('Processing new team data');
+				
+				newData = newData.slice(52).split('\n');
+				newData.pop();
+				
+				var newDataMap = new Map();
+				for (var i = 0; i < newData.length; i++) {
+					var oneTeam = newData[i].split('\t');
+					oneTeam[2] = parseInt(oneTeam[2]);
+					oneTeam[3] = parseInt(oneTeam[3]);
+					newDataMap.set(oneTeam[1], oneTeam);
+				}
+				newData = null;
+			
+				db.collection('teams').ensureIndex({ score : -1 }, function(err, result) {
+					if (err) console.log(err.message);
 					
-					var timeStamp = new Date(
-						parseInt(newData.slice(24, 28)),
-						months.indexOf(newData.slice(4, 7)),
-						parseInt(newData.slice(8, 10)),
-						parseInt(newData.slice(11, 13)),
-						parseInt(newData.slice(14, 16)),
-						parseInt(newData.slice(17, 19))
-					);
-					var daily = timeStamp - lastDailyUpdate > 86400000;
+					console.log('Loading collection into memory');
 					
-					newData = newData.slice(52).split('\n');
-					newData.pop();
-					var visited = new Set();
-					
-					console.log('Processing new team data');
-					
-					for (var i = 0; i < newData.length; i++) {
-						var oneTeam = newData[i].split('\t');
-						oneTeam[2] = parseInt(oneTeam[2]);
-						oneTeam[3] = parseInt(oneTeam[3]);
+					db.collection('teams').find().sort({ score : -1 }).toArray(function(err, teams) {
+						if (err) return console.log(err.message);
 						
-						if (map.has(oneTeam[0])) {
-							var doc = map.get(oneTeam[0]);
-							visited.add(doc.rank - 1);
-							doc.hourly.push({
-								score : doc.score,
-								units : doc.units,
-								rank : doc.rank,
-								date : doc.date
-							});
-							doc.score = oneTeam[2];
-							doc.units = oneTeam[3];
-							doc.date = timeStamp;
-							
-							while (timeStamp - doc.hourly[0].date > 88200000)
-								doc.hourly.shift();
-							
-							doc.scoreChange = doc.score - doc.hourly[0].score;
-							doc.unitsChange = doc.units - doc.hourly[0].units;
-							doc.rankChange = doc.hourly[0].rank - doc.rank;	
-							
-							if (daily) {
-								doc.daily.push({
-									score: doc.score,
-									units: doc.units,
-									rank: doc.rank,
-									scoreChange: doc.scoreChange,
-									unitsChange: doc.unitsChange,
-									rankChange: doc.rankChange,
-									date: doc.date
-								});
-							}
-						} else {
-							teams.push({
-								_id: oneTeam[1],
-								ID: oneTeam[0],
-								score: oneTeam[2],
-								units: oneTeam[3],
-								date: timeStamp,
-								rank: null,
-								scoreChange: null,
-								unitsChange: null,
-								rankChange: null,
-								hourly: [],
-								daily: []
-							});
-							map.set(oneTeam[0], teams[teams.length - 1]);
-							refs.push(teams[teams.length - 1]);
-							visited.add(teams.length - 1);
-						}
-					}
-					newData = null;
-					
-					console.log('New team data processed successfully');
-					console.log('Updating old team data');
-					
-					for (var i = 0; i < teams.length; i++)
-						if (!visited.has(i)) {
+						var map = new Map();
+						for (var i = 0; i < teams.length; i++)
+							map.set(teams[i]._id, teams[i]);
+						
+						console.log('Updating existing team data');
+
+						for (var i = 0; i < teams.length; i++) {
 							var doc = teams[i];
+							var key = doc._id;
+							
+							if(newDataMap.has(key)) {
+								var update = newDataMap.get(key);
+								doc.hourly.push({
+									score : doc.score,
+									units : doc.units,
+									rank : doc.rank,
+									date : doc.date
+								});
+								doc.score = update[2];
+								doc.units = update[3];
+								doc.date = timeStamp;
+								
+								newDataMap.delete(key);
+							}
 							
 							doc.scoreChange = null;
 							doc.unitsChange = null;
@@ -155,39 +126,64 @@ MongoClient.connect(url_db, function(err, db) {
 								});
 							}
 						}
-					visited = null;
-					
-					console.log('Old team data updated successfully');
-					console.log('Sorting team documents');
-					
-					for (var i = 1; i < refs.length; i++) {
-						var j = i;
-						while (j > 0 && refs[j - 1].score < refs[j].score) {
-							var swap = refs[j - 1];
-							refs[j - 1] = refs[j];
-							refs[j] = swap;
-							j--;
+						
+						console.log('Adding new teams to the collection');
+						
+						for (var [key, value] of newDataMap) {
+							var newTeam = value;
+							teams.push({
+								_id: newTeam[1],
+								ID: newTeam[0],
+								score: newTeam[2],
+								units: newTeam[3],
+								date: timeStamp,
+								rank: null,
+								scoreChange: null,
+								unitsChange: null,
+								rankChange: null,
+								hourly: [],
+								daily: []
+							});
+							map.set(key, teams[teams.length - 1]);
 						}
-					}
-					
-					console.log('Team documents sorted successfully');
-					console.log('Storing team documents in the database');
-					
-					async.eachOfLimit(refs, 2, function(doc, index, cb) {
-						doc.rank = index + 1;
-						db.collection('teams').replaceOne({ _id : doc._id }, doc, {
-							upsert : true
-						}, function(err, result) {
-							if (err) console.log(err.message);
-							cb();
+						newDataMap.clear();
+						
+						console.log('Sorting team documents');
+						
+						for (var i = 1; i < teams.length; i++) {
+							var j = i;
+							while (j > 0 && teams[j - 1].score < teams[j].score) {
+								var swap = teams[j - 1];
+								teams[j - 1] = teams[j];
+								teams[j] = swap;
+								j--;
+							}
+						}
+						
+						console.log('Storing team documents in the database');
+						
+						async.eachOfLimit(teams, 2, function(doc, index, cb) {
+							doc.rank = index + 1;
+							db.collection('teams').replaceOne({ _id : doc._id }, doc, {
+								upsert : true
+							}, function(err, result) {
+								if (err) console.log(err.message);
+								cb();
+							});
+						}, function(err) {
+							console.log('Hourly update for teams complete');
+							if (daily) {
+								var lastDailyUpdate = timeStamp + 1800000;
+								db.collection('lastDailyUpdates').findOneAndUpdate({
+									_id : 'lastDailyTeamUpdate'
+								}, {
+									$set : { date : lastDailyUpdate }
+								}, function(err, result) {
+									console.log('Daily update for teams complete');
+									db.close();
+								});
+							} else db.close();
 						});
-					}, function(err) {
-						console.log('Team documents stored successfully');
-						console.log('Hourly update for teams complete');
-						if (daily) {
-							// Notify parent of changed date
-							console.log('UPDATE DATE');
-						}
 					});
 				});
 			});
