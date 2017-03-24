@@ -48,7 +48,7 @@ http.get(url_team, function(res) {
 				
 				var daily;
 				if (result)
-					daily = timeStamp - result.date > 86400000;
+					daily = timeStamp - result.date > 84600000;
 				else
 					daily = false;
 				
@@ -173,11 +173,10 @@ http.get(url_team, function(res) {
 						}, function(err) {
 							console.log('Hourly update for teams complete');
 							if (daily) {
-								var lastDailyUpdate = timeStamp + 1800000;
 								db.collection('lastDailyUpdates').findOneAndUpdate({
 									_id : 'lastDailyTeamUpdate'
 								}, {
-									$set : { date : lastDailyUpdate }
+									$set : { date : timeStamp }
 								}, function(err, result) {
 									console.log('Daily update for teams complete');
 									db.close();
