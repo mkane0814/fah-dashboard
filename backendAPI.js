@@ -2,6 +2,7 @@
 
 var Vue = require("vue");
 var vueRouter = require("vue-router");
+var vueResource = require("vue-resource");
 var mongoose = require("mongoose");
 var bodyParser = require("body-parser");
 var express = require("express");
@@ -88,8 +89,21 @@ var vrouter = new vueRouter({
 });
 
 var vm = new Vue({
-	el: "#user-element",
-	message: getReqUser(/*Search Param*/)
+	template: "#test"
+	methods: {
+		teamQuery: function(params){
+			getReqTeam(params);
+		}
+
+		userQuery: function(params){
+			getReqUser(params);
+		}
+	}
+	data: {
+		userData: {},
+		teamData: {}
+	}
+	computed
 
 	
 });
