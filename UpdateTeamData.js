@@ -42,15 +42,12 @@ http.get(url_team, function(res) {
 			}, {
 				$setOnInsert : { _id : 'lastDailyTeamUpdate', date : timeStamp }
 			}, {
-				upsert : true
+				upsert : true,
+				returnOriginal : false
 			}, function(err, result) {
 				if (err) console.log(err.message);
 				
-				var daily;
-				if (result)
-					daily = timeStamp - result.date > 84600000;
-				else
-					daily = false;
+				var daily = timeStamp - result.date > 84600000;
 				
 				console.log('Processing new team data');
 				
