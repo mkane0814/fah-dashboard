@@ -66,7 +66,7 @@ http.get(url_team, function(res) {
 				db.collection('teams').ensureIndex({ score : -1 }, function(err, result) {
 					if (err) console.log(err.message);
 					
-					console.log('Loading collection into memory');
+					console.log('Loading team documents into memory');
 					
 					db.collection('teams').find().sort({ score : -1 }).toArray(function(err, teams) {
 						if (err) return console.log(err.message);
