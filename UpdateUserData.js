@@ -28,6 +28,8 @@ http.get(url_user, function(res) {
 		MongoClient.connect(url_db, function(err, db) {
 			if (err) return console.log(err.message);
 			
+			console.log('Processing new user data');
+			
 			var timeStamp = new Date(
 				parseInt(newData.slice(24, 28)),
 				months.indexOf(newData.slice(4, 7)),
@@ -48,8 +50,6 @@ http.get(url_user, function(res) {
 				if (err) console.log(err.message);
 				
 				var daily = timeStamp - result.date > 84600000;
-				
-				console.log('Processing new user data');
 				
 				newData = newData.slice(60).split('\n');
 				newData.pop();
