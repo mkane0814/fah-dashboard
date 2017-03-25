@@ -5,21 +5,21 @@ const async = require('async');
 var MongoClient = require('mongodb').MongoClient;
 
 const url_db = 'mongodb://localhost:27017/folding';
-const url_team = 'http://fah-web.stanford.edu/daily_team_summary.txt';
+const url_user = 'http://fah-web.stanford.edu/daily_user_summary.txt';
 
 var months = [
 	'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
 	'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
 ];
 
-http.get(url_team, function(res) {
+http.get(url_user, function(res) {
 	if (res.statusCode !== 200) {
-		console.log('HTTP request for team data failed');
+		console.log('HTTP request for user data failed');
 		return;
 	}
 	
 	var newData = '';
-	console.log('Downloading new team data');
+	console.log('Downloading new user data');
 	res.setEncoding('utf8');
 	res.on('data', function(chunk) {
 		newData += chunk;
@@ -28,7 +28,7 @@ http.get(url_team, function(res) {
 		MongoClient.connect(url_db, function(err, db) {
 			if (err) return console.log(err.message);
 			
-			console.log('Processing new team data');
+			console.log('Processing new user data');
 			
 			var timeStamp = new Date(
 				parseInt(newData.slice(24, 28)),
@@ -40,9 +40,9 @@ http.get(url_team, function(res) {
 			);
 			
 			db.collection('lastDailyUpdates').findOneAndUpdate({
-				_id : 'lastDailyTeamUpdate'
+				_id : 'lastDailyUserUpdate'
 			}, {
-				$setOnInsert : { _id : 'lastDailyTeamUpdate', date : timeStamp }
+				$setOnInsert : { _id : 'lastDailyUserUpdate', date : timeStamp }
 			}, {
 				upsert : true,
 				returnOriginal : false
@@ -51,19 +51,20 @@ http.get(url_team, function(res) {
 				
 				var daily = timeStamp - result.date > 84600000;
 				
-				newData = newData.slice(52).split('\n');
+				newData = newData.slice(60).split('\n');
 				newData.pop();
 				
 				var newDataMap = new Map();
 				for (var i = 0; i < newData.length; i++) {
-					var oneTeam = newData[i].split('\t');
-					oneTeam[2] = parseInt(oneTeam[2]);
-					oneTeam[3] = parseInt(oneTeam[3]);
-					newDataMap.set(oneTeam[1], oneTeam);
+					var oneUser = newData[i].split('\t');
+					oneUser[1] = parseInt(oneUser[1]);
+					oneUser[2] = parseInt(oneUser[2]);
+					var key = oneUser[0] + oneUser[3];
+					newDataMap.set(key, oneUser);
 				}
 				newData = null;
-			
-				db.collection('teams').createIndexes([
+				
+				db.collection('users').createIndexes([
 					{ key : { rank : 1 }, name : 'rank' },
 					{ key : { score : -1 }, name : 'score' },
 					{ key : { units : -1 }, name : 'units' },
@@ -73,99 +74,99 @@ http.get(url_team, function(res) {
 				], function(err, result) {
 					if (err) console.log(err.message);
 					
-					console.log('Loading team documents into memory');
+					console.log('Loading user documents into memory');
 					
-					db.collection('teams').find().sort({ score : -1 }).toArray(function(err, teams) {
+					db.collection('users').find().sort({ score : -1 }).toArray(function(err, users) {
 						if (err) return console.log(err.message);
 						
-						console.log('Updating existing team data');
-
-						for (var i = 0; i < teams.length; i++) {
-							var doc = teams[i];
-							var key = doc._id.name;
+						console.log('Updating existing user data');
+		
+						for (var i = 0; i < users.length; i++) {
+							var doc = users[i];
+							var key = doc._id.name + doc._id.teamID;
 							
 							if (daily) {
 								doc.daily.push({
+									rank : doc.rank,
 									score: doc.score,
 									units: doc.units,
-									rank: doc.rank,
+									rankChange : doc.rankChange,
 									scoreChange: doc.scoreChange,
 									unitsChange: doc.unitsChange,
-									rankChange: doc.rankChange,
-									date: doc.date
+									date : doc.date
 								});
 							}
 							
 							if(newDataMap.has(key)) {
 								var update = newDataMap.get(key);
 								doc.hourly.push({
+									rank : doc.rank,
 									score : doc.score,
 									units : doc.units,
-									rank : doc.rank,
 									date : doc.date
 								});
-								doc.score = update[2];
-								doc.units = update[3];
+								doc.score = update[1];
+								doc.units = update[2];
 								doc.date = timeStamp;
 								
 								newDataMap.delete(key);
 							}
 							
+							doc.rankChange = null;
 							doc.scoreChange = null;
 							doc.unitsChange = null;
-							doc.rankChange = null;
 							
 							while (doc.hourly.length > 0) {
 								if (timeStamp - doc.hourly[0].date > 88200000)
 									doc.hourly.shift();
 								else {
+									doc.rankChange = doc.hourly[0].rank - doc.rank;
 									doc.scoreChange = doc.score - doc.hourly[0].score;
 									doc.unitsChange = doc.units - doc.hourly[0].units;
-									doc.rankChange = doc.hourly[0].rank - doc.rank;
 									break;
 								}
 							}
 						}
 						
-						console.log('Adding new teams to the collection');
+						console.log('Adding new users to the collection');
 						
 						for (var [key, value] of newDataMap) {
-							var newTeam = value;
-							teams.push({
+							var newUser = value;
+							users.push({
 								_id: {
-									name : newTeam[1],
-									teamID : newTeam[0]
+									name: newUser[0],
+									teamID: newUser[3]
 								},
-								rank: null,
-								score: newTeam[2],
-								units: newTeam[3],
-								rankChange: null,
+								rank : null,
+								score: newUser[1],
+								units: newUser[2],
+								rankChange : null,
 								scoreChange: null,
 								unitsChange: null,
-								date: timeStamp,
+								date : timeStamp,
 								hourly: [],
 								daily: []
 							});
 						}
 						
-						console.log('Sorting team documents');
+						console.log('Sorting user documents');
 						
-						for (var i = 1; i < teams.length; i++) {
+						for (var i = 1; i < users.length; i++) {
 							var j = i;
-							while (j > 0 && teams[j - 1].score < teams[j].score) {
-								var swap = teams[j - 1];
-								teams[j - 1] = teams[j];
-								teams[j] = swap;
+							while (j > 0 && users[j - 1].score < users[j].score) {
+								var swap = users[j - 1];
+								users[j - 1] = users[j];
+								users[j] = swap;
 								j--;
 							}
 						}
 						
-						console.log('Storing team documents in the database');
+						console.log('Storing user documents in the database');
 						
-						async.eachOfLimit(teams, 2, function(doc, index, cb) {
+						async.eachOfLimit(users, 2, function(doc, index, cb) {
 							doc.rank = index + 1;
-							db.collection('teams').replaceOne({
-								_id : { name : doc._id.name, teamID : doc._id.teamID },
+							db.collection('users').replaceOne({
+								_id : { name : doc._id.name, teamID : doc._id.teamID }
 							}, doc, {
 								upsert : true
 							}, function(err, result) {
@@ -173,14 +174,14 @@ http.get(url_team, function(res) {
 								cb();
 							});
 						}, function(err) {
-							console.log('Hourly update for teams complete');
+							console.log('Hourly update for users complete');
 							if (daily) {
 								db.collection('lastDailyUpdates').findOneAndUpdate({
-									_id : 'lastDailyTeamUpdate'
+									_id : 'lastDailyUserUpdate'
 								}, {
 									$set : { date : timeStamp }
 								}, function(err, result) {
-									console.log('Daily update for teams complete');
+									console.log('Daily update for users complete');
 									db.close();
 								});
 							} else db.close();
