@@ -63,7 +63,14 @@ http.get(url_team, function(res) {
 				}
 				newData = null;
 			
-				db.collection('teams').ensureIndex({ score : -1 }, function(err, result) {
+				db.collection('teams').createIndexes([
+					{ key : { rank : 1 }, name : 'rank' },
+					{ key : { score : -1 }, name : 'score' },
+					{ key : { units : -1 }, name : 'units' },
+					{ key : { rankChange : -1 }, name : 'rankChange' },
+					{ key : { scoreChange : -1 }, name : 'scoreChange' },
+					{ key : { unitsChange : -1 }, name : 'unitsChange' }
+				], function(err, result) {
 					if (err) console.log(err.message);
 					
 					console.log('Loading team documents into memory');
@@ -71,15 +78,11 @@ http.get(url_team, function(res) {
 					db.collection('teams').find().sort({ score : -1 }).toArray(function(err, teams) {
 						if (err) return console.log(err.message);
 						
-						var map = new Map();
-						for (var i = 0; i < teams.length; i++)
-							map.set(teams[i]._id, teams[i]);
-						
 						console.log('Updating existing team data');
 
 						for (var i = 0; i < teams.length; i++) {
 							var doc = teams[i];
-							var key = doc._id;
+							var key = doc._id.name;
 							
 							if (daily) {
 								doc.daily.push({
@@ -129,15 +132,17 @@ http.get(url_team, function(res) {
 						for (var [key, value] of newDataMap) {
 							var newTeam = value;
 							teams.push({
-								_id: newTeam[1],
-								ID: newTeam[0],
+								_id: {
+									name : newTeam[1],
+									teamID : newTeam[0]
+								},
+								rank: null,
 								score: newTeam[2],
 								units: newTeam[3],
-								date: timeStamp,
-								rank: null,
+								rankChange: null,
 								scoreChange: null,
 								unitsChange: null,
-								rankChange: null,
+								date: timeStamp,
 								hourly: [],
 								daily: []
 							});
@@ -159,7 +164,9 @@ http.get(url_team, function(res) {
 						
 						async.eachOfLimit(teams, 2, function(doc, index, cb) {
 							doc.rank = index + 1;
-							db.collection('teams').replaceOne({ _id : doc._id }, doc, {
+							db.collection('teams').replaceOne({
+								_id : { name : doc._id.name, teamID : doc._id.teamID },
+							}, doc, {
 								upsert : true
 							}, function(err, result) {
 								if (err) console.log(err.message);
