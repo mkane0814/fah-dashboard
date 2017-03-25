@@ -81,6 +81,18 @@ http.get(url_team, function(res) {
 							var doc = teams[i];
 							var key = doc._id;
 							
+							if (daily) {
+								doc.daily.push({
+									score: doc.score,
+									units: doc.units,
+									rank: doc.rank,
+									scoreChange: doc.scoreChange,
+									unitsChange: doc.unitsChange,
+									rankChange: doc.rankChange,
+									date: doc.date
+								});
+							}
+							
 							if(newDataMap.has(key)) {
 								var update = newDataMap.get(key);
 								doc.hourly.push({
@@ -110,18 +122,6 @@ http.get(url_team, function(res) {
 									break;
 								}
 							}
-							
-							if (daily) {
-								doc.daily.push({
-									score: doc.score,
-									units: doc.units,
-									rank: doc.rank,
-									scoreChange: doc.scoreChange,
-									unitsChange: doc.unitsChange,
-									rankChange: doc.rankChange,
-									date: doc.date
-								});
-							}
 						}
 						
 						console.log('Adding new teams to the collection');
@@ -141,9 +141,7 @@ http.get(url_team, function(res) {
 								hourly: [],
 								daily: []
 							});
-							map.set(key, teams[teams.length - 1]);
 						}
-						newDataMap.clear();
 						
 						console.log('Sorting team documents');
 						
