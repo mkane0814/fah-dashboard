@@ -14,24 +14,15 @@ MongoClient.connect(url_db, function(err, db) {
   	var obj;
 
   	//send response if there is a request in this directory
-	app.get('/', function(req, res) {
-    	var requestType = req.params["name"];
+	app.get('/:limit/:userOrTeam', function(req, res) {
+    	var userOrTeam = req.params.userOrTeam;
+    	var limit = req.params.limit;
 
-    	if(requestType == "top100users")
-    	{
-    		//query then send results as a response
-    		queryDB('users', 100, obj);
-    		res.send(obj);
-    	}
-    	else if(requestType == "top100teams")
-    	{
-    		//query top 100 teams then send 100 teams as an object
-    		queryDB('teams', 100, obj);
-    		res.send(obj);
-    	}
+    	//query top teams or users then send a response as an object
+    	queryDB(userOrTeam, limit, obj);
+    	res.send(obj);
     	
 	});
-
 
 	//can uncomment below to test function
 	//queryDB('teams', 100, obj);
