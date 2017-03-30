@@ -7,7 +7,6 @@ const child_process = require("child_process");
 const cron = require("node-cron");
 
 
-// TODO: These are not being updated because the child script only has access to local copies
 var lastDailyUserUpdate = new Date();
 var lastDailyTeamUpdate = new Date();
 
