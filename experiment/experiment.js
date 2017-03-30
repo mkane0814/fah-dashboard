@@ -8,33 +8,12 @@ Vue.component('my-table', {
 var app = new Vue({
 	el: '#app-1',
 	data: {
-		users: [
-			{
-				_id: { name: 'Allen', teamID: '12' },
-				rank: 1,
-				score: 20,
-				units: 5,
-				rankChange: 0,
-				scoreChange: 2,
-				unitsChange: 1
-			},
-			{
-				_id: { name: 'Bob', teamID: '7' },
-				rank: 2,
-				score: 19,
-				units: 7,
-				rankChange: 0,
-				scoreChange: 3,
-				unitsChange: 2
-			}
-		]
-	}
+		users: []
+	},
 });
 
-/*
-this.$http.get('apiURL').success(function(users) {
-	this.$set('users', users);
-}).error(function(error) {
-	console.log(error);
+Vue.http.get('http://localhost:3000/25/users').then(function(response) {
+	app.users = response.body
+}, function(response) {
+	console.log(response.status);
 });
-*/
