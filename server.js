@@ -17,28 +17,27 @@ MongoClient.connect(url_db, function(err, db) {
   	var userOrTeam;
   	var limit;
 
-  	function queryDB(obj, userOrTeam, limit){
-
+  	
   		//send response if there is a request in this directory
 		app.get('/:limit/:userOrTeam', function(req, res) {
-    		if(userOrTeam === undefined){ userOrTeam = req.params.userOrTeam; }
-    		if(limit === undefined){ limit = req.params.limit; }
+    		var userOrTeam = req.params.userOrTeam;
+    		var limit = req.params.limit; 
     		//query top teams or users then send a respons1e as an object
     		
 
-    		obj = b.collection(teamOrUser).find().limit(limNum).sort({ score : -1 }).toArray(function(err, obj) {
+    		b.collection(teamOrUser).find().limit(limNum).sort({ score : -1 }).toArray(function(err, obj) {
 				if (err) return console.log(err.message);
+				console.log(obj);
+				res.send(obj);
 			});
-			console.log(obj);
-			res.send(obj);
-    	
-    		
 		});
-	}
+	
 	//can uncomment below to test function
-	queryDB(obj, 'teams', 100);
+	
+	var client = http.client();
+	client.get('/:limit/:userOrTeam', function ())
 
-	app.listen(3000);
-	console.log("Listening on port 3000");
-
+	app.listen(3000, function (){
+		console.log("Listening on port 3000");
+	});
 });
