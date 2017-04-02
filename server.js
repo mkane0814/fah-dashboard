@@ -19,7 +19,7 @@ MongoClient.connect(url_db, function(err, db) {
 
   	//send response if user wants to sort by rank, score, units, or changes in these values
 	app.get('/sort/:limit/:userOrTeam/:sortVal', function(req, res) {
-		userOrTeam = req.params.userOrTeam;
+		userOrTeam = req.params.userOrTeam.toLowerCase();
     	limit = parseInt(req.params.limit);
     	
 		var sortBy = req.params.sortVal;
@@ -40,13 +40,10 @@ MongoClient.connect(url_db, function(err, db) {
 		var findVal = req.params.findVal;
 		var findField = req.params.findField.toLowerCase();
 
-		//should remove daily and hourly json fields before sending object here
-		//delete obj["hourly"]; ***doesn't work
-
 		if(findField == "name")
 		{
-			//search for name
-	    	db.collection(userOrTeam).find({"_id.name" : findVal}).toArray(function(err, obj) {
+			//search for name and remove hourly and daily fields
+	    	db.collection(userOrTeam).find({"_id.name" : findVal }, {hourly : 0, daily : 0}).toArray(function(err, obj) {
 				if (err) return console.log(err.message);
 				
 				res.send(obj);
@@ -54,8 +51,8 @@ MongoClient.connect(url_db, function(err, db) {
     	}
     	else if(findField == "teamid")
     	{
-    		//search for teamID
-    		db.collection(userOrTeam).find({"_id.teamID" : findVal}).toArray(function(err, obj) {
+    		//search for teamID and remove hourly and daily fields
+    		db.collection(userOrTeam).find({"_id.teamID" : findVal}, {hourly : 0, daily : 0}).toArray(function(err, obj) {
 				if (err) return console.log(err.message);
 				
 				res.send(obj);
@@ -63,8 +60,8 @@ MongoClient.connect(url_db, function(err, db) {
     	}
     	else if(findField == "rank")
     	{
-    		//search for rank
-    		db.collection(userOrTeam).find({rank : parseInt(findVal)}).toArray(function(err, obj) {
+    		//search for rank and remove hourly and daily fields
+    		db.collection(userOrTeam).find({rank : parseInt(findVal)}, {hourly : 0, daily : 0}).toArray(function(err, obj) {
 				if (err) return console.log(err.message);
 				
 				res.send(obj);
