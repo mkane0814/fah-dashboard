@@ -71,8 +71,7 @@ MongoClient.connect(url_db, function(err, db) {
 	});
 	
 
-	//var client = http.client();
-	//client.get('/:limit/:userOrTeam', function (){ });
+	
 
 	app.listen(3000, function (){
 		console.log("Listening on port 3000");
