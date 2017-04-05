@@ -18,18 +18,24 @@ MongoClient.connect(url_db, function(err, db) {
   	var limit;
 
   	//send response if user wants to sort by rank, score, units, or changes in these values
-	app.get('/sort/:limit/:userOrTeam/:sortVal', function(req, res) {
+	app.get('/sort/:limit/:userOrTeam/:sortVal/:pageNum', function(req, res) {
 		userOrTeam = req.params.userOrTeam.toLowerCase();
     	limit = parseInt(req.params.limit);
     	
 		var sortBy = req.params.sortVal;
-    	
-    	//query top teams or users then send a response as an object
-    	db.collection(userOrTeam).find().limit(limit).sort({ sortBy : -1 }).toArray(function(err, obj) {
+		var pageNum = parseInt(req.params.pageNum);
+
+    	//calculate amount to skip to display a specified page
+    	var skipAmt = limit * (pageNum - 1);
+
+    	//query top teams or users on a page then send a response as an object
+	    db.collection(userOrTeam).find().limit(limit).sort({ sortBy : -1 }).skip(skipAmt).toArray(function(err, obj) {
 			if (err) return console.log(err.message);
 
 			res.send(obj);
 		});
+
+    	
 	});
 
 	//send response if user wants to search for name, teamID, or rank
