@@ -1,5 +1,5 @@
 /**
- Latest edit: Troy Herbison on March 30
+ Latest edit: Troy Herbison on April 4
  */
 
  /* jshint esversion: 6 */
@@ -8,6 +8,9 @@ const url_db = 'mongodb://localhost:27017/folding';
 var app = require('express')();
 var MongoClient = require('mongodb').MongoClient;
 var assert = require('assert');
+var bodyParser = require('body-parser');
+var async = require('async');
+var jsonConcat = require("json-concat");
 
 // Use connect method to connect to the Server
 MongoClient.connect(url_db, function(err, db) {
@@ -16,6 +19,10 @@ MongoClient.connect(url_db, function(err, db) {
   	var obj;
   	var userOrTeam;
   	var limit;
+  	var findField;
+
+	//parse application/json for recieving post requests
+	app.use(bodyParser.json());
 
   	//send response if user wants to sort by rank, score, units, or changes in these values
 	app.get('/sort/:limit/:userOrTeam/:sortVal/:pageNum', function(req, res) {
@@ -44,7 +51,7 @@ MongoClient.connect(url_db, function(err, db) {
 
 		//findVal could be a name, teamID, or rank
 		var findVal = req.params.findVal;
-		var findField = req.params.findField.toLowerCase();
+		findField = req.params.findField.toLowerCase();
 
 		if(findField == "name")
 		{
@@ -76,8 +83,40 @@ MongoClient.connect(url_db, function(err, db) {
 
 	});
 	
+	app.post('/post/:userOrTeam/:findField', function (req, res) {
+  		
+  		userOrTeam = req.params.userOrTeam.toLowerCase();
+  		findField = req.params.findField.toLowerCase();
 
-	
+  		var arr = req.body;
+  		var objToSend = [];
+
+  		async.forEach(Object.keys(arr.namesID), function (item, callback){ 
+
+    		db.collection(userOrTeam).find({"_id.name" : arr.namesID[item].name }, {hourly : 0, daily : 0}).toArray(function(err, obj) {
+				if (err) return console.log(err.message);
+				
+				console.log(obj);
+				
+				//objToSend = JSON.stringify(obj);
+				//objToSend = objToSend + obj;
+				//res.send(obj);
+				objToSend = objToSend.concat(obj);
+				//objToSend = obj.concat(objToSend);
+				
+			});
+
+    		// tell async that that particular element of the iterator is done
+    		callback(); 
+
+		}, function(err) {
+    		//iterating done, send the object
+    		res.send(objToSend);
+		}); 
+  		
+  		//res.send(objToSend);
+	});
+
 
 	app.listen(3000, function (){
 		console.log("Listening on port 3000");
