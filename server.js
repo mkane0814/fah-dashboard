@@ -103,11 +103,11 @@ MongoClient.connect(url_db, function(err, db) {
 				//res.send(obj);
 				objToSend = objToSend.concat(obj);
 				//objToSend = obj.concat(objToSend);
-				
+					
+    			// tell async that that particular element of the iterator is done
+    			callback(); 
 			});
 
-    		// tell async that that particular element of the iterator is done
-    		callback(); 
 
 		}, function(err) {
     		//iterating done, send the object
