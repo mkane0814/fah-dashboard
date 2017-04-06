@@ -10,7 +10,7 @@ var MongoClient = require('mongodb').MongoClient;
 var assert = require('assert');
 var bodyParser = require('body-parser');
 var async = require('async');
-var jsonConcat = require("json-concat");
+//var jsonConcat = require("json-concat");
 
 // Use connect method to connect to the Server
 MongoClient.connect(url_db, function(err, db) {
@@ -87,23 +87,16 @@ MongoClient.connect(url_db, function(err, db) {
   		
   		userOrTeam = String(req.body.type);
   		
-
   		var arr = req.body.names;
-  		var objToSend = [];
+  		var arrToSend = [];
 
   		async.forEach(Object.keys(arr), function (item, callback){ 
 
-
-    		db.collection(userOrTeam).find({"_id.name" : arr[item] }, {hourly : 0, daily : 0}, function(err, obj) {
+    		db.collection(userOrTeam).findOne({"_id.name" : arr[item] }, function(err, obj) {
 				if (err) return console.log(err.message);
-				
-				console.log(obj);
-				
-				//objToSend = JSON.stringify(obj);
-				//objToSend = objToSend + obj;
-				//res.send(obj);
-				objToSend = objToSend.concat(obj);
-				//objToSend = obj.concat(objToSend);
+
+				//add the newly queried object to the array
+				arrToSend.push(obj);
 					
     			// tell async that that particular element of the iterator is done
     			callback(); 
@@ -111,13 +104,14 @@ MongoClient.connect(url_db, function(err, db) {
 
 
 		}, function(err) {
-    		//iterating done, send the object
-    		res.send(objToSend);
+			//iterating done, first convert to JSON string before sending
+			arrToSend = JSON.stringify(arrToSend);
+
+    		//send the JSON string
+    		res.send(arrToSend);
 		}); 
   		
-  		//res.send(objToSend);
 	});
-
 
 	app.listen(3000, function (){
 		console.log("Listening on port 3000");
