@@ -83,17 +83,18 @@ MongoClient.connect(url_db, function(err, db) {
 
 	});
 	
-	app.post('/post/:userOrTeam/:findField', function (req, res) {
+	app.post('/post', function (req, res) {
   		
-  		userOrTeam = req.params.userOrTeam.toLowerCase();
-  		findField = req.params.findField.toLowerCase();
+  		userOrTeam = String(req.body.type);
+  		
 
-  		var arr = req.body;
+  		var arr = req.body.names;
   		var objToSend = [];
 
-  		async.forEach(Object.keys(arr.namesID), function (item, callback){ 
+  		async.forEach(Object.keys(arr), function (item, callback){ 
 
-    		db.collection(userOrTeam).find({"_id.name" : arr.namesID[item].name }, {hourly : 0, daily : 0}).toArray(function(err, obj) {
+
+    		db.collection(userOrTeam).find({"_id.name" : arr[item] }, {hourly : 0, daily : 0}, function(err, obj) {
 				if (err) return console.log(err.message);
 				
 				console.log(obj);
