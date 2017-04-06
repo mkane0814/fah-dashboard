@@ -38,6 +38,7 @@
     "vue" : "latest",
     "vue-resource" : "latest",
     "vue-router"  : "latest",
-    "d3" : "latest"
+    "d3" : "latest",
+    "json-concat" : "latest"
   }
 }
