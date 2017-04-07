@@ -25,7 +25,7 @@ MongoClient.connect(url_db, function(err, db) {
 	app.use(bodyParser.json());
 
   	//send response if user wants to sort by rank, score, units, or changes in these values
-	app.get('/sort/:limit/:userOrTeam/:sortVal/:pageNum', function(req, res) {
+	app.get('/sort/:userOrTeam/:sortVal/:limit/:pageNum', function(req, res) {
 		userOrTeam = req.params.userOrTeam.toLowerCase();
     	limit = parseInt(req.params.limit);
     	
@@ -46,7 +46,7 @@ MongoClient.connect(url_db, function(err, db) {
 	});
 
 	//send response if user wants to search for name, teamID, or rank
-	app.get('/find/:findVal/:findField/:userOrTeam', function(req, res) {
+	app.get('/find/:userOrTeam/:findField/:findVal', function(req, res) {
 		userOrTeam = req.params.userOrTeam;
 
 		//findVal could be a name, teamID, or rank
