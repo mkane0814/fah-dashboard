@@ -56,7 +56,7 @@ MongoClient.connect(url_db, function(err, db) {
 		if(findField == "name")
 		{
 			//search for name and remove hourly and daily fields
-	    	db.collection(userOrTeam).find({"_id.name" : findVal }, {hourly : 0, daily : 0}).toArray(function(err, obj) {
+	    	db.collection(userOrTeam).findOne({"_id.name" : findVal }, function(err, obj) {
 				if (err) return console.log(err.message);
 				
 				res.send(obj);
@@ -65,7 +65,7 @@ MongoClient.connect(url_db, function(err, db) {
     	else if(findField == "teamid")
     	{
     		//search for teamID and remove hourly and daily fields
-    		db.collection(userOrTeam).find({"_id.teamID" : findVal}, {hourly : 0, daily : 0}).toArray(function(err, obj) {
+    		db.collection(userOrTeam).findOne({"_id.teamID" : findVal}, function(err, obj) {
 				if (err) return console.log(err.message);
 				
 				res.send(obj);
@@ -74,7 +74,7 @@ MongoClient.connect(url_db, function(err, db) {
     	else if(findField == "rank")
     	{
     		//search for rank and remove hourly and daily fields
-    		db.collection(userOrTeam).find({rank : parseInt(findVal)}, {hourly : 0, daily : 0}).toArray(function(err, obj) {
+    		db.collection(userOrTeam).findOne({rank : parseInt(findVal)}, function(err, obj) {
 				if (err) return console.log(err.message);
 				
 				res.send(obj);
