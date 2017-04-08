@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Data Visualization Test</title>
+    <script src="../node_modules/d3/build/d3.min.js"></script>
+    <script src="../node_modules/d3-scale/build/d3-scale.min.js"></script>
+    <script src="../node_modules/d3-time/build/d3-time.min.js"></script>
+    <script src="../node_modules/d3-time-format/build/d3-time-format.min.js"></script>
+    <script src="../node_modules/vue/dist/vue.min.js"></script>
+    <script src="../node_modules/vue-resource/dist/vue-resource.min.js"></script>
+</head>
+<body>
+
+    <div id="app">
+        <h2>Data Visualization Test</h2>
+        <button @click="drawGraph">Draw Graph</button>
+        <button @click="getDate">Get Dates!</button>
+        <div>
+            <svg id="visualisation" width="1000" height="500"></svg>
+        </div>
+
+        <textarea id="output" v-model="output">{{output}}</textarea>
+    </div>
+
+    <script src="../scripts/test-data.js"></script>
+    <script src="../scripts/datavisualization.js"></script>
+</body>
+</html>
+
