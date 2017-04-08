@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Stats@Home</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body>
+	<h1>Stats@Home</h1>
+	<my-table id='app-1' :users='users'></my-table>
+</body>
+
+<script type="text/javascript" src="vue.js"></script>
+<script type="text/javascript" src="vue-resource.js"></script>
+<script type="text/x-template" id="table-template">
+	<table>
+		<thead>
+			<tr>
+				<th id="rank" rowspan="2">Rank</th>
+				<th id="score" rowspan="2">Score</th>
+				<th id="name" rowspan="2">Name</th>
+				<th id="teamID" rowspan="2">Team ID</th>
+				<th id="units" rowspan="2">Work Units</th>
+				<th id="changes" colspan="3">Change in Past 24 Hours</th>
+			</tr>
+			<tr>
+				<th id="scoreChange">Score</th>
+				<th id="rankChange">Rank</th>
+				<th id="unitsChange">Work Units</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr v-for="user in users">
+				<td>{{ user.rank }}</td>
+				<td>{{ user.score }}</td>
+				<td>{{ user._id.name }}</td>
+				<td>{{ user._id.teamID }}</td>
+				<td>{{ user.units }}</td>
+				<td>{{ user.scoreChange }}</td>
+				<td>{{ user.rankChange }}</td>
+				<td>{{ user.unitsChange }}</td>
+			</tr>
+		</tbody>
+	</table>
+</script>
+<script type="text/javascript" src="experiment.js"></script>
+
+</html>
