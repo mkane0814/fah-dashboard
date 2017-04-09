@@ -25,13 +25,14 @@ MongoClient.connect(url_db, function(err, db) {
 	app.use(bodyParser.json());
 
   	//send response if user wants to sort by rank, score, units, or changes in these values
-	app.get('/sort/:userOrTeam/:sortVal/:limit/:pageNum', function(req, res) {
+	app.get('/sort/:userOrTeam/:sortVal/:limit/:order/:pageNum', function(req, res) {
 		userOrTeam = req.params.userOrTeam.toLowerCase();
     	limit = parseInt(req.params.limit);
 		res.header('Access-Control-Allow-Origin', '*');
     	
 		var sortBy = {};
-		sortBy[req.params.sortVal] = -1;
+		//sortBy[req.params.sortVal] = -1;
+		sortBy[req.params.sortVal] = parseInt(req.params.order);
 		var pageNum = parseInt(req.params.pageNum);
 
     	//calculate amount to skip to display a specified page
