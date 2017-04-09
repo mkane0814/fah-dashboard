@@ -28,15 +28,17 @@ MongoClient.connect(url_db, function(err, db) {
 	app.get('/sort/:userOrTeam/:sortVal/:limit/:pageNum', function(req, res) {
 		userOrTeam = req.params.userOrTeam.toLowerCase();
     	limit = parseInt(req.params.limit);
+		res.header('Access-Control-Allow-Origin', '*');
     	
-		var sortBy = req.params.sortVal;
+		var sortBy = {};
+		sortBy[req.params.sortVal] = -1;
 		var pageNum = parseInt(req.params.pageNum);
 
     	//calculate amount to skip to display a specified page
     	var skipAmt = limit * (pageNum - 1);
 
     	//query top teams or users on a page then send a response as an object
-	    db.collection(userOrTeam).find().limit(limit).sort({ sortBy : -1 }).skip(skipAmt).toArray(function(err, obj) {
+	    db.collection(userOrTeam).find().sort(sortBy).skip(skipAmt).limit(limit).toArray(function(err, obj) {
 			if (err) return console.log(err.message);
 
 			res.send(obj);
