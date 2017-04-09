@@ -1,62 +1,85 @@
-<!DOCTYPE html>
-<html>
-	<head>
-		<meta charset="utf-8">
-		<title>Folding@Home Leaderboards</title>
-		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-		<script type="text/javascript" src="https://unpkg.com/vue"></script>
-		<script type="text/javascript" src="https://cdn.jsdelivr.net/vue.resource/1.3.0/vue-resource.min.js"></script>
-		<script type="text/x-template" id="table-template">
-			<table class="table">
-				<thead>
-					<tr>
-						<th rowspan="2">Rank</th>
-						<th id="score" rowspan="2">
-							<a href="#">Score<span class="glyphicon glyphicon-chevron-down"></span></a>
-						</th>
-						<th rowspan="2">Name</th>
-						<th rowspan="2">Team ID</th>
-						<th id="units" rowspan="2">
-							<a href="#">Work Units</a>
-						</th>
-						<th colspan="3">Change in Past 24 Hours</th>
-						<th rowspan="2">Add</th>
-					</tr>
-					<tr>
-						<th id="scoreChange"><a href="#">Score</a></th>
-						<th id="rankChange"><a href="#">Rank</a></th>
-						<th id="unitsChange"><a href="#">Work Units</a></th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr v-for="one in group">
-						<td>{{ one.rank }}</td>
-						<td>{{ one.score }}</td>
-						<td>{{ one._id.name }}</td>
-						<td>{{ one._id.teamID }}</td>
-						<td>{{ one.units }}</td>
-						<td>{{ one.scoreChange }}</td>
-						<td>{{ one.rankChange }}</td>
-						<td>{{ one.unitsChange }}</td>
-						<td><a href="#"><span class="glyphicon glyphicon-plus"></span></a></td>
-					</tr>
-				</tbody>
-			</table>
-		</script>
-	</head>
-	<body>
-		<div class="container">
-			<h1>Stats@Home</h1>
-			<div>
-				<ul class="nav nav-tabs" id="tabs">
-					<li class="active" id="users-tab"><a href="#">Users</a></li>
-					<li id="teams-tab"><a href="#">Teams</a></li>
-				</ul>
-				<stats-table v-show="seen" id="users-table" :group='users'></stats-table>
-				<stats-table v-show="seen" id="teams-table" :group='teams'></stats-table>
-			</div>
-		</div>
-	</body>
-	<script type="text/javascript" src="index.js"></script>
-</html>
+Vue.component('stats-table', {
+	template: '#table-template',
+	props: {
+		seen: Boolean,
+		group: Array
+	}
+});
+
+var usersApp = new Vue({
+	el: '#users-table',
+	data: {
+		seen: true,
+		users: []
+	},
+});
+
+var teamsApp = new Vue({
+	el: '#teams-table',
+	data: {
+		seen: false,
+		teams: []
+	},
+});
+
+Vue.http.get('http://localhost:3000/sort/users/score/25/-1/1').then(function(response) {
+	usersApp.users = response.body;
+}, function(response) {});
+
+Vue.http.get('http://localhost:3000/sort/teams/score/25/-1/1').then(function(response) {
+	teamsApp.teams = response.body;
+}, function(response) {});
+
+var activeTab = document.getElementById("users-tab");
+var usersSortingBy = "score";
+var teamsSortingBy = "score";
+var usersSortOrder = -1;
+var teamsSortOrder = -1;
+var usersPageNum = 1;
+var teamsPageNum = 1;
+const limit = 25;
+
+document.getElementById("tabs").onclick = function(event) {
+	var tabClicked = event.target.parentElement;
+	if (tabClicked == activeTab)
+		return;
+	activeTab.removeAttribute("class");
+	tabClicked.setAttribute("class", "active");
+	activeTab = tabClicked;
+	usersApp.seen = !usersApp.seen;
+	teamsApp.seen = !teamsApp.seen;
+};
+
+document.getElementById("users-table").onclick = function(event) {
+	var clicked = event.target.parentElement;
+	if (clicked.tagName == "TD") {
+		// handle adding user to graph
+		return;
+	}
+	var sortBy = clicked.getAttribute("id");
+	if (sortBy == usersSortingBy)
+		usersSortOrder *= -1;
+	else
+		usersSortOrder = -1;
+	Vue.http.get('http://localhost:3000/sort/users/' + sortBy + '/' + limit + '/' + usersSortOrder.toString() + '/1').then(function(response) {
+		usersApp.users = response.body;
+		usersSortingBy = sortBy;
+	}, function(response) {});
+};
+
+document.getElementById("teams-table").onclick = function(event) {
+	var clicked = event.target.parentElement;
+	if (clicked.tagName == "TD") {
+		// handle adding team to graph
+		return;
+	}
+	var sortBy = clicked.getAttribute("id");
+	if (sortBy == teamsSortingBy)
+		teamsSortOrder *= -1;
+	else
+		teamsSortOrder = -1;
+	Vue.http.get('http://localhost:3000/sort/teams/' + sortBy + '/' + limit + '/' + teamsSortOrder.toString() + '/1').then(function(response) {
+		teamsApp.teams = response.body;
+		teamsSortingBy = sortBy;
+	}, function(response) {});
+};
