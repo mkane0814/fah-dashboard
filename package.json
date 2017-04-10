@@ -1,0 +1,44 @@
+{
+  "name": "fah-dashboard",
+  "version": "1.0.0",
+  "description": "An interactive dashboard for Folding@Home users that allows them to visualize and compare data of users and teams based on the work units they have completed over time.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/devgr/fah-dashboard.git"
+  },
+  "keywords": [
+    "Folding@Home",
+    "folding",
+    "dashboard",
+    "node.js",
+    "node",
+    "vue",
+    "vue.js",
+    "d3",
+    "d3.js",
+    "visualization",
+    "graphs"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/devgr/fah-dashboard/issues"
+  },
+  "homepage": "https://github.com/devgr/fah-dashboard#readme",
+  "dependencies": {
+    "mongodb": "^2.2.24",
+    "mongoose" : "latest",
+    "express" : "latest",
+    "body-parser" : "latest",
+    "node-cron": "^1.1.3",
+    "vue" : "latest",
+    "vue-resource" : "latest",
+    "vue-router"  : "latest",
+    "d3" : "latest",
+    "json-concat" : "latest"
+  }
+}
