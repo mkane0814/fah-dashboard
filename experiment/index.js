@@ -22,11 +22,22 @@ var teamsApp = new Vue({
 	},
 });
 
+Vue.http.get('http://localhost:3000/sort/users/score/25/-1/1').then(function(response) {
+	usersApp.users = response.body;
+}, function(response) {});
+
+Vue.http.get('http://localhost:3000/sort/teams/score/25/-1/1').then(function(response) {
+	teamsApp.teams = response.body;
+}, function(response) {});
+
 var activeTab = document.getElementById("users-tab");
-var sortingBy = "score";
-var sortOrder = -1;
+var usersSortingBy = "score";
+var teamsSortingBy = "score";
+var usersSortOrder = -1;
+var teamsSortOrder = -1;
+var usersPageNum = 1;
+var teamsPageNum = 1;
 const limit = 25;
-var pageNum = 1;
 
 document.getElementById("tabs").onclick = function(event) {
 	var tabClicked = event.target.parentElement;
@@ -46,13 +57,13 @@ document.getElementById("users-table").onclick = function(event) {
 		return;
 	}
 	var sortBy = clicked.getAttribute("id");
-	console.log(sortBy);
-	if (sortBy == sortingBy)
-		sortOrder *= -1;
+	if (sortBy == usersSortingBy)
+		usersSortOrder *= -1;
 	else
-		sortOrder = -1;
-	Vue.http.get('http://localhost:3000/sort/users/' + sortBy + '/' + limit + '/' + pageNum).then(function(response) {
+		usersSortOrder = -1;
+	Vue.http.get('http://localhost:3000/sort/users/' + sortBy + '/' + limit + '/' + usersSortOrder.toString() + '/1').then(function(response) {
 		usersApp.users = response.body;
+		usersSortingBy = sortBy;
 	}, function(response) {});
 };
 
@@ -63,12 +74,12 @@ document.getElementById("teams-table").onclick = function(event) {
 		return;
 	}
 	var sortBy = clicked.getAttribute("id");
-	console.log(sortBy);
-	if (sortBy == sortingBy)
-		sortOrder *= -1;
+	if (sortBy == teamsSortingBy)
+		teamsSortOrder *= -1;
 	else
-		sortOrder = -1;
-	Vue.http.get('http://localhost:3000/sort/teams/' + sortBy + '/' + limit + '/' + pageNum).then(function(response) {
+		teamsSortOrder = -1;
+	Vue.http.get('http://localhost:3000/sort/teams/' + sortBy + '/' + limit + '/' + teamsSortOrder.toString() + '/1').then(function(response) {
 		teamsApp.teams = response.body;
+		teamsSortingBy = sortBy;
 	}, function(response) {});
 };
