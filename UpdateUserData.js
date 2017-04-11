@@ -2,35 +2,37 @@
 
 const http = require('http');
 const async = require('async');
-var MongoClient = require('mongodb').MongoClient;
+const MongoClient = require('mongodb').MongoClient;
 
-const url_db = 'mongodb://localhost:27017/folding';
-const url_user = 'http://fah-web.stanford.edu/daily_user_summary.txt';
+const path = {
+	db: "mongodb://localhost:27017/folding",
+	usersUrl: "http://fah-web/stanford.edu/daily_user_summary.txt"
+};
 
-var months = [
+const months = [
 	'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
 	'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
 ];
 
-http.get(url_user, function(res) {
+http.get(path.usersUrl, function(res) {
 	if (res.statusCode !== 200) {
 		console.log('HTTP request for user data failed');
 		return;
 	}
 	
-	var newData = '';
+	let newData = '';
 	console.log('Downloading new user data');
 	res.setEncoding('utf8');
 	res.on('data', function(chunk) {
 		newData += chunk;
 	});
 	res.on('end', function() {
-		MongoClient.connect(url_db, function(err, db) {
+		MongoClient.connect(path.db, function(err, db) {
 			if (err) return console.log(err.message);
 			
 			console.log('Processing new user data');
 			
-			var timeStamp = new Date(
+			let timeStamp = new Date(
 				parseInt(newData.slice(24, 28)),
 				months.indexOf(newData.slice(4, 7)),
 				parseInt(newData.slice(8, 10)),
@@ -49,17 +51,17 @@ http.get(url_user, function(res) {
 			}, function(err, result) {
 				if (err) console.log(err.message);
 				
-				var daily = timeStamp - result.date > 84600000;
+				let daily = timeStamp - result.date > 84600000;
 				
 				newData = newData.slice(60).split('\n');
 				newData.pop();
 				
-				var newDataMap = new Map();
-				for (var i = 0; i < newData.length; i++) {
-					var oneUser = newData[i].split('\t');
+				let newDataMap = new Map();
+				for (let i = 0; i < newData.length; i++) {
+					let oneUser = newData[i].split('\t');
 					oneUser[1] = parseInt(oneUser[1]);
 					oneUser[2] = parseInt(oneUser[2]);
-					var key = oneUser[0] + oneUser[3];
+					let key = oneUser[0] + oneUser[3];
 					newDataMap.set(key, oneUser);
 				}
 				newData = null;
@@ -81,9 +83,9 @@ http.get(url_user, function(res) {
 						
 						console.log('Updating existing user data');
 		
-						for (var i = 0; i < users.length; i++) {
-							var doc = users[i];
-							var key = doc._id.name + doc._id.teamID;
+						for (let i = 0; i < users.length; i++) {
+							let doc = users[i];
+							let key = doc._id.name + doc._id.teamID;
 							
 							if (daily) {
 								doc.daily.push({
@@ -98,7 +100,7 @@ http.get(url_user, function(res) {
 							}
 							
 							if(newDataMap.has(key)) {
-								var update = newDataMap.get(key);
+								let update = newDataMap.get(key);
 								doc.hourly.push({
 									rank : doc.rank,
 									score : doc.score,
@@ -130,8 +132,8 @@ http.get(url_user, function(res) {
 						
 						console.log('Adding new users to the collection');
 						
-						for (var [key, value] of newDataMap) {
-							var newUser = value;
+						for (let [key, value] of newDataMap) {
+							let newUser = value;
 							users.push({
 								_id: {
 									name: newUser[0],
@@ -151,10 +153,10 @@ http.get(url_user, function(res) {
 						
 						console.log('Sorting user documents');
 						
-						for (var i = 1; i < users.length; i++) {
-							var j = i;
+						for (let i = 1; i < users.length; i++) {
+							let j = i;
 							while (j > 0 && users[j - 1].score < users[j].score) {
-								var swap = users[j - 1];
+								let swap = users[j - 1];
 								users[j - 1] = users[j];
 								users[j] = swap;
 								j--;

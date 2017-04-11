@@ -2,35 +2,37 @@
 
 const http = require('http');
 const async = require('async');
-var MongoClient = require('mongodb').MongoClient;
+const MongoClient = require('mongodb').MongoClient;
 
-const url_db = 'mongodb://localhost:27017/folding';
-const url_team = 'http://fah-web.stanford.edu/daily_team_summary.txt';
+const path = {
+	db: "mongodb://localhost:27017/folding",
+	teamUrl: "http://fah-web.stanford.edu/daily_team_summary.txt"
+};
 
-var months = [
+const months = [
 	'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
 	'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
 ];
 
-http.get(url_team, function(res) {
+http.get(path.teamUrl, function(res) {
 	if (res.statusCode !== 200) {
 		console.log('HTTP request for team data failed');
 		return;
 	}
 	
-	var newData = '';
+	let newData = '';
 	console.log('Downloading new team data');
 	res.setEncoding('utf8');
 	res.on('data', function(chunk) {
 		newData += chunk;
 	});
 	res.on('end', function() {
-		MongoClient.connect(url_db, function(err, db) {
+		MongoClient.connect(path.db, function(err, db) {
 			if (err) return console.log(err.message);
 			
 			console.log('Processing new team data');
 			
-			var timeStamp = new Date(
+			let timeStamp = new Date(
 				parseInt(newData.slice(24, 28)),
 				months.indexOf(newData.slice(4, 7)),
 				parseInt(newData.slice(8, 10)),
@@ -49,14 +51,14 @@ http.get(url_team, function(res) {
 			}, function(err, result) {
 				if (err) console.log(err.message);
 				
-				var daily = timeStamp - result.date > 84600000;
+				let daily = timeStamp - result.date > 84600000;
 				
 				newData = newData.slice(52).split('\n');
 				newData.pop();
 				
-				var newDataMap = new Map();
-				for (var i = 0; i < newData.length; i++) {
-					var oneTeam = newData[i].split('\t');
+				let newDataMap = new Map();
+				for (let i = 0; i < newData.length; i++) {
+					let oneTeam = newData[i].split('\t');
 					oneTeam[2] = parseInt(oneTeam[2]);
 					oneTeam[3] = parseInt(oneTeam[3]);
 					newDataMap.set(oneTeam[1], oneTeam);
@@ -80,9 +82,9 @@ http.get(url_team, function(res) {
 						
 						console.log('Updating existing team data');
 
-						for (var i = 0; i < teams.length; i++) {
-							var doc = teams[i];
-							var key = doc._id.name;
+						for (let i = 0; i < teams.length; i++) {
+							let doc = teams[i];
+							let key = doc._id.name;
 							
 							if (daily) {
 								doc.daily.push({
@@ -97,7 +99,7 @@ http.get(url_team, function(res) {
 							}
 							
 							if(newDataMap.has(key)) {
-								var update = newDataMap.get(key);
+								let update = newDataMap.get(key);
 								doc.hourly.push({
 									score : doc.score,
 									units : doc.units,
@@ -129,8 +131,8 @@ http.get(url_team, function(res) {
 						
 						console.log('Adding new teams to the collection');
 						
-						for (var [key, value] of newDataMap) {
-							var newTeam = value;
+						for (let [key, value] of newDataMap) {
+							let newTeam = value;
 							teams.push({
 								_id: {
 									name : newTeam[1],
@@ -150,10 +152,10 @@ http.get(url_team, function(res) {
 						
 						console.log('Sorting team documents');
 						
-						for (var i = 1; i < teams.length; i++) {
-							var j = i;
+						for (let i = 1; i < teams.length; i++) {
+							let j = i;
 							while (j > 0 && teams[j - 1].score < teams[j].score) {
-								var swap = teams[j - 1];
+								let swap = teams[j - 1];
 								teams[j - 1] = teams[j];
 								teams[j] = swap;
 								j--;

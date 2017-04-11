@@ -3,17 +3,17 @@
  */
 
 
-var express = require('express');
-var app = express();
-var MongoClient = require('mongodb').MongoClient;
-var assert = require('assert');
-var bodyParser = require('body-parser');
-var async = require('async');
+const express = require('express');
+let app = express();
+let MongoClient = require('mongodb').MongoClient;
+const assert = require('assert');
+const bodyParser = require('body-parser');
+const async = require('async');
 const child_process = require("child_process");
 const cron = require("node-cron");
 
-var router = express.Router();
-var path = {
+let router = express.Router();
+const path = {
 	default: __dirname,
 	dependencies: __dirname + "/node_modules",
 	experiment: __dirname + "/experiment",
@@ -158,16 +158,16 @@ app.listen(3000, function (){
 /*
  * Schedule the hourly updates to spawn on new threads
  */
-var lastDailyUserUpdate = new Date();
-var lastDailyTeamUpdate = new Date();
+let lastDailyUserUpdate = new Date();
+let lastDailyTeamUpdate = new Date();
 
-var downloadUserTask;
-var downloadTeamTask;
+let downloadUserTask;
+let downloadTeamTask;
 
 cron.schedule('0 * * * *', function() {
 
 	// Set up the environment object with the dates that the child processes will need
-	var env = {
+	let env = {
 		lastDailyUserUpdate: lastDailyUserUpdate,
 		lastDailyTeamUpdate: lastDailyTeamUpdate
 	};
