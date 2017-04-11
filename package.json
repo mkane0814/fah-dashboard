@@ -33,7 +33,7 @@
     "mongoose" : "latest",
     "body-parser" : "latest",
     "vue-router"  : "latest",
-    "json-concat" : "latest"
+    "json-concat" : "latest",
     "async": "^2.1.5",
     "d3": "latest",
     "express": "^4.15.2",
