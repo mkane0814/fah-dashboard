@@ -7,6 +7,9 @@
 		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 		<script type="text/javascript" src="/dependencies/vue/dist/vue.min.js"></script>
 		<script type="text/javascript" src="/dependencies/vue-resource/dist/vue-resource.min.js"></script>
+		<script type="text/javascript" src="/dependencies/d3/build/d3.min.js"></script>
+		<script type="text/javascript" src="/dependencies/d3-scale/build/d3-scale.min.js"></script>
+		<script type="text/javascript" src="/dependencies/d3-time/build/d3-time.min.js"></script>
 		<script type="text/x-template" id="table-template">
 			<table class="table">
 				<thead>
@@ -44,6 +47,11 @@
 				</tbody>
 			</table>
 		</script>
+		<script type="text/x-template" id="graph-template">
+			<div style="margin-top: 8px">
+				<svg id="visualization" height="500" width="1000"></svg>
+			</div>
+		</script>
 	</head>
 	<body>
 		<div class="container">
@@ -52,11 +60,13 @@
 				<ul class="nav nav-tabs" id="tabs">
 					<li class="active" id="users-tab"><a href="#">Users</a></li>
 					<li id="teams-tab"><a href="#">Teams</a></li>
+					<li id="graph-tab"><a href="#">Graph</a></li>
 				</ul>
 				<stats-table v-show="seen" id="users-table" :group='users'></stats-table>
 				<stats-table v-show="seen" id="teams-table" :group='teams'></stats-table>
+				<graph v-show="seen" id="graph"></graph>
 			</div>
 		</div>
+		<script type="text/javascript" src="/experiment/index.js"></script>
 	</body>
-	<script type="text/javascript" src="/experiment/index.js"></script>
 </html>
