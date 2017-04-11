@@ -37,7 +37,7 @@ router.get("/", function(req, res) {
 });
 
 // Routing to specific paths for convenience
-app.use("/", router);
+app.use("/", router);       // This one sends the request to the router, which serves the webpage
 app.use("/experiment", express.static(path.experiment));
 app.use("/dependencies", express.static(path.dependencies));
 
