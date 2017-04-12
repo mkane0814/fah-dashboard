@@ -10,7 +10,6 @@ var MongoClient = require('mongodb').MongoClient;
 var assert = require('assert');
 var bodyParser = require('body-parser');
 var async = require('async');
-//var jsonConcat = require("json-concat");
 
 // Use connect method to connect to the Server
 MongoClient.connect(url_db, function(err, db) {
@@ -94,32 +93,43 @@ MongoClient.connect(url_db, function(err, db) {
   		var arrToSend = [];
   		res.header('Access-Control-Allow-Origin', '*');
 
-  		//subtract and add 1 to dates so that after slicing the date range is contained
-  		var fromDate = parseInt(Date.parse(req.body.fromDate)) - 1;
-  		var toDate = parseInt(Date.parse(req.body.toDate)) + 1;
+  		//parse the dates from post request
+  		var fromDate = Date.parse(req.body.fromDate);
+  		var toDate = Date.parse(req.body.toDate);
+
+  		var dailyObj;
+  		var updatedDailyArr = [];
+  		var i;
   		var curDate;
-  		var updatedDate;
 
   		async.forEach(Object.keys(arr), function (item, callback){ 
 
     		db.collection(userOrTeam).findOne({"_id.name" : arr[item] }, function(err, obj) {
 				if (err) return console.log(err.message);
 
-				//hourly should be daily here (had to put for testing)
-				//get the date of the current object
-				curDate = parseInt(Date.parse(obj.hourly[0].date));
+				//assign daily object to the current user or team's daily field
+				dailyArr = obj.daily;
 
-				//slice it so that the current date contains the requested from and to date
-				//curDate = curDate.slice(fromDate, toDate);
+				//iterate until a date is found within the range
+				for(i = 0; i < dailyArr.length; i++)
+				{
+					curDate = Date.parse(dailyArr[i].date);
 
-				//convert from milliseconds to date object
-				updatedDate = new Date(curDate);
+					//break if a date is within the range
+					if((curDate >= fromDate) && (curDate <= toDate))
+						break;
+				}
 
-				//hourly should be daily here (had to put for testing)
-				obj.hourly[0].date = updatedDate;
+				//splice starting at date within range to the end of the daily array (works because array is in chronological order)
+				updatedDailyArr = dailyArr.splice(i, dailyArr.length);
+
+				//update daily field with new daily array
+				obj.daily = updatedDailyArr;
 
 				//add the newly queried object to the array
 				arrToSend.push(obj);
+
+				i = 0;
 					
     			// tell async that that particular element of the iterator is done
     			callback(); 
