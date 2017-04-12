@@ -1,5 +1,5 @@
 /**
- Latest edit: Troy Herbison on April 4
+ Latest edit: Troy Herbison on April 12
  */
 
  /* jshint esversion: 6 */
@@ -31,7 +31,7 @@ MongoClient.connect(url_db, function(err, db) {
 		res.header('Access-Control-Allow-Origin', '*');
     	
 		var sortBy = {};
-		//sortBy[req.params.sortVal] = -1;
+		
 		sortBy[req.params.sortVal] = parseInt(req.params.order);
 		var pageNum = parseInt(req.params.pageNum);
 
@@ -92,11 +92,31 @@ MongoClient.connect(url_db, function(err, db) {
   		
   		var arr = req.body.names;
   		var arrToSend = [];
+  		res.header('Access-Control-Allow-Origin', '*');
+
+  		//subtract and add 1 to dates so that after slicing the date range is contained
+  		var fromDate = parseInt(Date.parse(req.body.fromDate)) - 1;
+  		var toDate = parseInt(Date.parse(req.body.toDate)) + 1;
+  		var curDate;
+  		var updatedDate;
 
   		async.forEach(Object.keys(arr), function (item, callback){ 
 
     		db.collection(userOrTeam).findOne({"_id.name" : arr[item] }, function(err, obj) {
 				if (err) return console.log(err.message);
+
+				//hourly should be daily here (had to put for testing)
+				//get the date of the current object
+				curDate = parseInt(Date.parse(obj.hourly[0].date));
+
+				//slice it so that the current date contains the requested from and to date
+				//curDate = curDate.slice(fromDate, toDate);
+
+				//convert from milliseconds to date object
+				updatedDate = new Date(curDate);
+
+				//hourly should be daily here (had to put for testing)
+				obj.hourly[0].date = updatedDate;
 
 				//add the newly queried object to the array
 				arrToSend.push(obj);
