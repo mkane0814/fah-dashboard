@@ -97,7 +97,7 @@ MongoClient.connect(url_db, function(err, db) {
   		var fromDate = Date.parse(req.body.fromDate);
   		var toDate = Date.parse(req.body.toDate);
 
-  		var dailyObj;
+  		var dailyArr;
   		var updatedDailyArr = [];
   		var i;
   		var curDate;
