@@ -49,10 +49,9 @@ app.use("/dependencies", express.static(path.dependencies));
 MongoClient.connect(path.db, function(err, db) {
   assert.equal(null, err);
   	
-  	var obj;
-  	var userOrTeam;
-  	var limit;
-  	var findField;
+  	let userOrTeam;
+  	let limit;
+  	let findField;
 
 	//parse application/json for recieving post requests
 	app.use(bodyParser.json());
@@ -63,13 +62,13 @@ MongoClient.connect(path.db, function(err, db) {
     	limit = parseInt(req.params.limit);
 		res.header('Access-Control-Allow-Origin', '*');
     	
-		var sortBy = {};
+		let sortBy = {};
 		//sortBy[req.params.sortVal] = -1;
 		sortBy[req.params.sortVal] = parseInt(req.params.order);
-		var pageNum = parseInt(req.params.pageNum);
+		let pageNum = parseInt(req.params.pageNum);
 
     	//calculate amount to skip to display a specified page
-    	var skipAmt = limit * (pageNum - 1);
+    	let skipAmt = limit * (pageNum - 1);
 
     	//query top teams or users on a page then send a response as an object
 	    db.collection(userOrTeam).find().sort(sortBy).skip(skipAmt).limit(limit).toArray(function(err, obj) {
