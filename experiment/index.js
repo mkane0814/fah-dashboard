@@ -2,7 +2,9 @@ Vue.component('stats-table', {
 	template: '#table-template',
 	props: {
 		seen: Boolean,
-		group: Array
+		group: Array,
+		type: String,
+		sort: Function
 	}
 });
 
@@ -13,20 +15,54 @@ Vue.component('graph', {
 	}
 });
 
+const limit = 25;
+
 let usersApp = new Vue({
 	el: '#users-table',
 	data: {
 		seen: true,
-		users: []
+		users: [],
+		sortingBy: 'score',
+		sortOrder: -1
 	},
+	methods: {
+		sort: function(sortBy) {
+			if (this.sortingBy === sortBy) {
+				this.sortOrder *= -1;
+			} else {
+				this.sortOrder = -1;
+			}
+
+			Vue.http.get('http://localhost:3000/sort/users/' + sortBy + '/' + limit + '/' + this.sortOrder.toString() + '/1')
+				.then(function(response) {
+					usersApp.users = response.body;
+					usersApp.sortingBy = sortBy;
+			}, function(response) {});
+		}
+	}
 });
 
 let teamsApp = new Vue({
 	el: '#teams-table',
 	data: {
 		seen: false,
-		teams: []
+		teams: [],
+		sortingBy: 'score',
+		sortOrder: -1
 	},
+	methods: {
+		sort: function(sortBy) {
+			if (this.sortingBy === sortBy) {
+				this.sortOrder *= -1;
+			} else {
+				this.sortOrder = -1;
+			}
+			Vue.http.get('http://localhost:3000/sort/teams/' + sortBy + '/' + limit + '/' + this.sortOrder.toString() + '/1').then(function(response) {
+				teamsApp.teams = response.body;
+				teamsApp.sortingBy = 'score';
+			}, function(response) {});
+		}
+	}
 });
 
 let graphApp = new Vue({
@@ -157,7 +193,16 @@ let graphApp = new Vue({
 	methods: {
 		graphData: function () {
 
-			const colors = ["red", "green", "blue", "orange", "purple"];
+			const colors = ["orangered",
+							"seagreen",
+							"steelblue",
+							"springgreen",
+							"tomato",
+							"darkorchid",
+							"gold",
+							"lightseagreen",
+							"crimson",
+							"cornflowerblue"];
 
 			// This determines the min/max bounds for the y axis
 			let min = 0;
@@ -261,7 +306,6 @@ let usersSortOrder = -1;
 let teamsSortOrder = -1;
 let usersPageNum = 1;
 let teamsPageNum = 1;
-const limit = 25;
 
 document.getElementById("tabs").onclick = function(event) {
 	let tabClicked = event.target.parentElement;
@@ -270,41 +314,11 @@ document.getElementById("tabs").onclick = function(event) {
 	activeTab.removeAttribute("class");
 	tabClicked.setAttribute("class", "active");
 	activeTab = tabClicked;
-	usersApp.seen = document.getElementById('users-tab').className.indexOf('active') !== -1;
-	teamsApp.seen = document.getElementById('teams-tab').className.indexOf('active') !== -1;
-	graphApp.seen = document.getElementById('graph-tab').className.indexOf('active') !== -1;
+	usersApp.seen = hasClass('users-tab', 'active');
+	teamsApp.seen = hasClass('teams-tab', 'active');
+	graphApp.seen = hasClass('graph-tab', 'active');
 };
 
-document.getElementById("users-table").onclick = function(event) {
-	let clicked = event.target.parentElement;
-	if (clicked.tagName === "TD") {
-		// handle adding user to graph
-		return;
-	}
-	let sortBy = clicked.getAttribute("id");
-	if (sortBy === usersSortingBy)
-		usersSortOrder *= -1;
-	else
-		usersSortOrder = -1;
-	Vue.http.get('http://localhost:3000/sort/users/' + sortBy + '/' + limit + '/' + usersSortOrder.toString() + '/1').then(function(response) {
-		usersApp.users = response.body;
-		usersSortingBy = sortBy;
-	}, function(response) {});
-};
-
-document.getElementById("teams-table").onclick = function(event) {
-	let clicked = event.target.parentElement;
-	if (clicked.tagName === "TD") {
-		// handle adding team to graph
-		return;
-	}
-	let sortBy = clicked.getAttribute("id");
-	if (sortBy === teamsSortingBy)
-		teamsSortOrder *= -1;
-	else
-		teamsSortOrder = -1;
-	Vue.http.get('http://localhost:3000/sort/teams/' + sortBy + '/' + limit + '/' + teamsSortOrder.toString() + '/1').then(function(response) {
-		teamsApp.teams = response.body;
-		teamsSortingBy = sortBy;
-	}, function(response) {});
-};
+function hasClass(element, classname) {
+	return document.getElementById(element).className.indexOf(classname) !== -1;
+}

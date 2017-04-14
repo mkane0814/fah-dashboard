@@ -11,41 +11,43 @@
 		<script type="text/javascript" src="/dependencies/d3-scale/build/d3-scale.min.js"></script>
 		<script type="text/javascript" src="/dependencies/d3-time/build/d3-time.min.js"></script>
 		<script type="text/x-template" id="table-template">
-			<table class="table">
-				<thead>
-					<tr>
-						<th rowspan="2">Rank</th>
-						<th id="score" rowspan="2">
-							<a href="#">Score<span class="glyphicon glyphicon-chevron-down"></span></a>
-						</th>
-						<th rowspan="2">Name</th>
-						<th rowspan="2">Team ID</th>
-						<th id="units" rowspan="2">
-							<a href="#">Work Units</a>
-						</th>
-						<th colspan="3">Change in Past 24 Hours</th>
-						<th rowspan="2">Add</th>
-					</tr>
-					<tr>
-						<th id="scoreChange"><a href="#">Score</a></th>
-						<th id="rankChange"><a href="#">Rank</a></th>
-						<th id="unitsChange"><a href="#">Work Units</a></th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr v-for="one in group">
-						<td>{{ one.rank }}</td>
-						<td>{{ one.score }}</td>
-						<td>{{ one._id.name }}</td>
-						<td>{{ one._id.teamID }}</td>
-						<td>{{ one.units }}</td>
-						<td>{{ one.scoreChange }}</td>
-						<td>{{ one.rankChange }}</td>
-						<td>{{ one.unitsChange }}</td>
-						<td><a href="#"><span class="glyphicon glyphicon-plus"></span></a></td>
-					</tr>
-				</tbody>
-			</table>
+			<div>
+				<table class="table">
+					<thead>
+						<tr>
+							<th rowspan="2">Rank</th>
+							<th id="score" rowspan="2">
+								<a href="#" @click="sort('score')">Score<span class="glyphicon glyphicon-chevron-down"></span></a>
+							</th>
+							<th rowspan="2">Name</th>
+							<th rowspan="2">Team ID</th>
+							<th id="units" rowspan="2">
+								<a href="#" @click="sort('units')">Work Units</a>
+							</th>
+							<th colspan="3">Change in Past 24 Hours</th>
+							<th rowspan="2">Add</th>
+						</tr>
+						<tr>
+							<th id="scoreChange"><a href="#">Score</a></th>
+							<th id="rankChange"><a href="#">Rank</a></th>
+							<th id="unitsChange"><a href="#">Work Units</a></th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr v-for="one in group">
+							<td>{{ one.rank }}</td>
+							<td>{{ one.score }}</td>
+							<td>{{ one._id.name }}</td>
+							<td>{{ one._id.teamID }}</td>
+							<td>{{ one.units }}</td>
+							<td>{{ one.scoreChange }}</td>
+							<td>{{ one.rankChange }}</td>
+							<td>{{ one.unitsChange }}</td>
+							<td><a href="#"><span class="glyphicon glyphicon-plus"></span></a></td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
 		</script>
 		<script type="text/x-template" id="graph-template">
 			<div style="margin-top: 8px">
@@ -62,8 +64,8 @@
 					<li id="teams-tab"><a href="#">Teams</a></li>
 					<li id="graph-tab"><a href="#">Graph</a></li>
 				</ul>
-				<stats-table v-show="seen" id="users-table" :group='users'></stats-table>
-				<stats-table v-show="seen" id="teams-table" :group='teams'></stats-table>
+				<stats-table v-show="seen" id="users-table" :group='users' type="users" :sort="sort"></stats-table>
+				<stats-table v-show="seen" id="teams-table" :group='teams' type="teams" :sort="sort"></stats-table>
 				<graph v-show="seen" id="graph"></graph>
 			</div>
 		</div>
