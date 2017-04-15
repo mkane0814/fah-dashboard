@@ -51,13 +51,15 @@ MongoClient.connect(url_db, function(err, db) {
 	app.get('/find/:userOrTeam/:findField/:findVal', function(req, res) {
 		userOrTeam = req.params.userOrTeam;
 
+		res.header('Access-Control-Allow-Origin', '*');
+
 		//findVal could be a name, teamID, or rank
 		var findVal = req.params.findVal;
 		findField = req.params.findField.toLowerCase();
 
 		if(findField == "name")
 		{
-			//search for name and remove hourly and daily fields
+			//search for name
 	    	db.collection(userOrTeam).findOne({"_id.name" : findVal }, function(err, obj) {
 				if (err) return console.log(err.message);
 				
@@ -66,7 +68,7 @@ MongoClient.connect(url_db, function(err, db) {
     	}
     	else if(findField == "teamid")
     	{
-    		//search for teamID and remove hourly and daily fields
+    		//search for teamID
     		db.collection(userOrTeam).findOne({"_id.teamID" : findVal}, function(err, obj) {
 				if (err) return console.log(err.message);
 				
@@ -75,7 +77,7 @@ MongoClient.connect(url_db, function(err, db) {
     	}
     	else if(findField == "rank")
     	{
-    		//search for rank and remove hourly and daily fields
+    		//search for rank
     		db.collection(userOrTeam).findOne({rank : parseInt(findVal)}, function(err, obj) {
 				if (err) return console.log(err.message);
 				
@@ -84,7 +86,25 @@ MongoClient.connect(url_db, function(err, db) {
     	}
 
 	});
+
+	//send response if user wants to find a user or team that contains a specified substring
+	app.get('/search/:userOrTeam/:searchVal', function(req, res) {
+		userOrTeam = req.params.userOrTeam;
+
+		res.header('Access-Control-Allow-Origin', '*');
+
+		//search for a name containing anything before and after the substring 
+		var searchVal = ".".concat(req.params.searchVal).concat(".");
+
+		db.collection(userOrTeam).find({"_id.name" : {$regex : searchVal}}).toArray(function(err, obj) {
+			if (err) return console.log(err.message);
+
+			res.send(obj);
+		});
+
+	});
 	
+	//send response if user wants to graph up to 10 users within a date range
 	app.post('/post', function (req, res) {
   		
   		userOrTeam = String(req.body.type);
@@ -128,8 +148,6 @@ MongoClient.connect(url_db, function(err, db) {
 
 				//add the newly queried object to the array
 				arrToSend.push(obj);
-
-				i = 0;
 					
     			// tell async that that particular element of the iterator is done
     			callback(); 
