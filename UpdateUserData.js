@@ -6,7 +6,7 @@ const MongoClient = require('mongodb').MongoClient;
 
 const path = {
 	db: "mongodb://localhost:27017/folding",
-	usersUrl: "http://fah-web/stanford.edu/daily_user_summary.txt"
+	usersUrl: "http://fah-web.stanford.edu/daily_user_summary.txt"
 };
 
 const months = [
