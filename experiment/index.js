@@ -11,7 +11,8 @@ Vue.component('stats-table', {
 Vue.component('graph', {
 	template: '#graph-template',
 	props: {
-		seen: Boolean
+		seen: Boolean,
+		colors: Array
 	}
 });
 
@@ -188,21 +189,20 @@ let graphApp = new Vue({
 				],
 				"daily":[]
 			}
-		]
+		],
+		colors: ["orangered",
+			"seagreen",
+			"steelblue",
+			"springgreen",
+			"tomato",
+			"darkorchid",
+			"gold",
+			"lightseagreen",
+			"crimson",
+			"cornflowerblue"]
 	},
 	methods: {
 		graphData: function () {
-
-			const colors = ["orangered",
-							"seagreen",
-							"steelblue",
-							"springgreen",
-							"tomato",
-							"darkorchid",
-							"gold",
-							"lightseagreen",
-							"crimson",
-							"cornflowerblue"];
 
 			// This determines the min/max bounds for the y axis
 			let min = 0;
@@ -278,7 +278,7 @@ let graphApp = new Vue({
 			for (let i = 0; i < this.testdata.length; i++) {
 				vis.append('svg:path')
 					.attr('d', lineGen(this.testdata[i].hourly, i))
-					.attr('stroke', colors[i])
+					.attr('stroke', this.colors[i])
 					.attr('stroke-width', 2)
 					.attr('fill', 'none');
 			}
