@@ -46,12 +46,13 @@ app.use("/dependencies", express.static(path.dependencies));
  * Use connect method to connect to the Server
  * Api requests for data from mongo are handled in here
  */
-MongoClient.connect(path.db, function(err, db) {
+MongoClient.connect(url_db, function(err, db) {
   assert.equal(null, err);
   	
-  	let userOrTeam;
-  	let limit;
-  	let findField;
+  	var obj;
+  	var userOrTeam;
+  	var limit;
+  	var findField;
 
 	//parse application/json for recieving post requests
 	app.use(bodyParser.json());
@@ -62,13 +63,13 @@ MongoClient.connect(path.db, function(err, db) {
     	limit = parseInt(req.params.limit);
 		res.header('Access-Control-Allow-Origin', '*');
     	
-		let sortBy = {};
-		//sortBy[req.params.sortVal] = -1;
+		var sortBy = {};
+		
 		sortBy[req.params.sortVal] = parseInt(req.params.order);
-		let pageNum = parseInt(req.params.pageNum);
+		var pageNum = parseInt(req.params.pageNum);
 
     	//calculate amount to skip to display a specified page
-    	let skipAmt = limit * (pageNum - 1);
+    	var skipAmt = limit * (pageNum - 1);
 
     	//query top teams or users on a page then send a response as an object
 	    db.collection(userOrTeam).find().sort(sortBy).skip(skipAmt).limit(limit).toArray(function(err, obj) {
@@ -84,31 +85,33 @@ MongoClient.connect(path.db, function(err, db) {
 	app.get('/find/:userOrTeam/:findField/:findVal', function(req, res) {
 		userOrTeam = req.params.userOrTeam;
 
+		res.header('Access-Control-Allow-Origin', '*');
+
 		//findVal could be a name, teamID, or rank
 		var findVal = req.params.findVal;
 		findField = req.params.findField.toLowerCase();
 
-		if(findField === "name")
+		if(findField == "name")
 		{
-			//search for name and remove hourly and daily fields
+			//search for name
 	    	db.collection(userOrTeam).findOne({"_id.name" : findVal }, function(err, obj) {
 				if (err) return console.log(err.message);
 				
 				res.send(obj);
 			});
     	}
-    	else if(findField === "teamid")
+    	else if(findField == "teamid")
     	{
-    		//search for teamID and remove hourly and daily fields
+    		//search for teamID
     		db.collection(userOrTeam).findOne({"_id.teamID" : findVal}, function(err, obj) {
 				if (err) return console.log(err.message);
 				
 				res.send(obj);
 			});
     	}
-    	else if(findField === "rank")
+    	else if(findField == "rank")
     	{
-    		//search for rank and remove hourly and daily fields
+    		//search for rank
     		db.collection(userOrTeam).findOne({rank : parseInt(findVal)}, function(err, obj) {
 				if (err) return console.log(err.message);
 				
@@ -117,18 +120,65 @@ MongoClient.connect(path.db, function(err, db) {
     	}
 
 	});
+
+	//send response if user wants to find a user or team that contains a specified substring
+	app.get('/search/:userOrTeam/:searchVal', function(req, res) {
+		userOrTeam = req.params.userOrTeam;
+
+		res.header('Access-Control-Allow-Origin', '*');
+
+		//search for a name containing anything before and after the substring 
+		var searchVal = ".".concat(req.params.searchVal).concat(".");
+
+		db.collection(userOrTeam).find({"_id.name" : {$regex : searchVal}}).toArray(function(err, obj) {
+			if (err) return console.log(err.message);
+
+			res.send(obj);
+		});
+
+	});
 	
+	//send response if user wants to graph up to 10 users within a date range
 	app.post('/post', function (req, res) {
   		
   		userOrTeam = String(req.body.type);
   		
   		var arr = req.body.names;
   		var arrToSend = [];
+  		res.header('Access-Control-Allow-Origin', '*');
+
+  		//parse the dates from post request
+  		var fromDate = Date.parse(req.body.fromDate);
+  		var toDate = Date.parse(req.body.toDate);
+
+  		var dailyArr;
+  		var updatedDailyArr = [];
+  		var i;
+  		var curDate;
 
   		async.forEach(Object.keys(arr), function (item, callback){ 
 
     		db.collection(userOrTeam).findOne({"_id.name" : arr[item] }, function(err, obj) {
 				if (err) return console.log(err.message);
+
+				//assign daily object to the current user or team's daily field
+				dailyArr = obj.daily;
+
+				//iterate until a date is found within the range
+				for(i = 0; i < dailyArr.length; i++)
+				{
+					curDate = Date.parse(dailyArr[i].date);
+
+					//break if a date is within the range
+					if((curDate >= fromDate) && (curDate <= toDate))
+						break;
+				}
+
+				//splice starting at date within range to the end of the daily array (works because array is in chronological order)
+				updatedDailyArr = dailyArr.splice(i, dailyArr.length);
+
+				//update daily field with new daily array
+				obj.daily = updatedDailyArr;
 
 				//add the newly queried object to the array
 				arrToSend.push(obj);
@@ -147,7 +197,12 @@ MongoClient.connect(path.db, function(err, db) {
 		}); 
   		
 	});
+
+	app.listen(3000, function (){
+		console.log("Listening on port 3000");
+	});
 });
+
 
 // Set the app to listen
 app.listen(3000, function (){
