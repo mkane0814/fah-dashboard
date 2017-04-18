@@ -28,9 +28,15 @@
 							<th rowspan="2">Add</th>
 						</tr>
 						<tr>
-							<th id="scoreChange"><a href="#">Score</a></th>
-							<th id="rankChange"><a href="#">Rank</a></th>
-							<th id="unitsChange"><a href="#">Work Units</a></th>
+							<th id="scoreChange">
+								<a href="#" @click="sort('scoreChange')">Score</a>
+							</th>
+							<th id="rankChange">
+								<a href="#" @click="sort('rankChange')">Rank</a>
+							</th>
+							<th id="unitsChange">
+								<a href="#" @click="sort('unitsChange')">Work Units</a>
+							</th>
 						</tr>
 					</thead>
 					<tbody>
