@@ -1,0 +1,26 @@
+:root {
+    --foldingOrange: #FE6B22;
+    --foldingLightGrey: #E7E7E7;
+    --foldingDarkGrey: #383838;
+}
+
+a {
+    color: var(--foldingOrange);
+}
+
+.nav-pills > li.active > a,
+.nav-pills > li.active > a:focus,
+.nav-pills > li.active > a:hover {
+    color: #fff;
+    background-color: var(--foldingOrange);
+}
+
+a:focus, a:hover {
+    color: orangered;
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+/*body {
+    background-color: var(--foldingDarkGrey);
+}*/

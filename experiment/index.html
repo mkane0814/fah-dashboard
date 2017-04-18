@@ -5,6 +5,7 @@
 		<title>Folding@Home Leaderboards</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+		<link rel="stylesheet" href="/experiment/style.css">
 		<script type="text/javascript" src="/dependencies/vue/dist/vue.min.js"></script>
 		<script type="text/javascript" src="/dependencies/vue-resource/dist/vue-resource.min.js"></script>
 		<script type="text/javascript" src="/dependencies/d3/build/d3.min.js"></script>
@@ -51,7 +52,14 @@
 		</script>
 		<script type="text/x-template" id="graph-template">
 			<div style="margin-top: 8px">
+				<ul class="nav nav-pills" id="sort-by-options" style="margin: 4px;">
+					<li class="active" id="sort-by-units" @click="setgb('units')"><a href="#">Units</a></li>
+					<li id="sort-by-rank" @click="setgb('rank')"><a href="#">Rank</a></li>
+				</ul>
 				<svg id="visualization" height="500" width="1000"></svg>
+				<ul>
+					<li v-for="color in colors"><span :style="{color: 'white', backgroundColor: color}">{{color}}</span></li>
+				</ul>
 			</div>
 		</script>
 	</head>
@@ -66,7 +74,7 @@
 				</ul>
 				<stats-table v-show="seen" id="users-table" :group='users' type="users" :sort="sort"></stats-table>
 				<stats-table v-show="seen" id="teams-table" :group='teams' type="teams" :sort="sort"></stats-table>
-				<graph v-show="seen" id="graph"></graph>
+				<graph v-show="seen" id="graph" :colors="colors" :setgb="setGraphBy"></graph>
 			</div>
 		</div>
 		<script type="text/javascript" src="/experiment/index.js"></script>

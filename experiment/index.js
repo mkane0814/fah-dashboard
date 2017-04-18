@@ -12,7 +12,9 @@ Vue.component('graph', {
 	template: '#graph-template',
 	props: {
 		seen: Boolean,
-		colors: Array
+		colors: Array,
+		graphBy: String,
+		setgb: Function
 	}
 });
 
@@ -70,6 +72,7 @@ let graphApp = new Vue({
 	el: '#graph',
 	data: {
 		seen: false,
+		groupData: [],
 		testdata: [
 			{
 				"_id":{
@@ -191,18 +194,102 @@ let graphApp = new Vue({
 			}
 		],
 		colors: ["orangered",
-			"seagreen",
-			"steelblue",
-			"springgreen",
-			"tomato",
-			"darkorchid",
-			"gold",
-			"lightseagreen",
-			"crimson",
-			"cornflowerblue"]
+				 "seagreen",
+				 "steelblue",
+				 "springgreen",
+				 "tomato",
+				 "darkorchid",
+				 "gold",
+				 "lightseagreen",
+				 "crimson",
+				 "cornflowerblue"],
+		graphBy: "units"
 	},
 	methods: {
-		graphData: function () {
+		setGraphBy: function(newgb) {
+			this.graphBy = newgb;
+		},
+		graphData: function() {
+
+			d3.selectAll('svg > *').remove();
+
+			this.groupData = this.testdata;
+			let minY = 0;
+			let maxY = 0;
+
+			let minDate = new Date(this.groupData[0].hourly[0].date);
+			let maxDate = new Date(this.groupData[0].hourly[0].date);
+
+			for (let i = 0; i < this.groupData.length; i++) {
+				for (let j = 0; j < this.groupData[i].hourly.length; j++) {
+					let currentY = this.groupData[i].hourly[j][this.graphBy];
+					if (currentY > maxY)  {
+						maxY = currentY;
+					} else if (currentY < minY) {
+						minY = currentY
+					}
+
+					let currentDate = new Date(this.groupData[i].hourly[j].date);
+					if (currentDate > maxDate) {
+						maxDate = currentDate;
+					} else if (currentDate < minDate) {
+						minDate = currentDate
+					}
+				}
+			}
+
+			let vis = d3.select('#visualization'),
+				width = 1000,
+				height = 500,
+				margins = {
+					top: 50,
+					right: 30,
+					bottom: 50,
+					left: 50
+				},
+				xScale = d3.scaleTime()
+					.range([margins.left, width - margins.right])
+					.domain([minDate, maxDate]),
+				yScale = d3.scaleLinear()
+					.range([height - margins.top, margins.bottom])
+					.domain([minY, maxY]),
+				xAxis = d3.axisBottom()
+					.scale(xScale),
+				yAxis = d3.axisLeft()
+					.scale(yScale);
+
+			vis.style('border', '#CFCFCF 2px solid')
+				.style('border-radius', '4px')
+				.style('background', '#F0F0F0')
+				.attr('height', height)
+				.attr('width', width);
+
+			let lineGen = d3.line()
+				.x(function (d) {
+					return xScale(new Date(d.date));
+				})
+				.y(function (d) {
+					return yScale(d[graphApp.graphBy]);
+				});
+
+			vis.append("svg:g")
+				.attr("transform", "translate(0," + (height - margins.bottom) + ")")
+				.call(xAxis);
+
+			vis.append("svg:g")
+				.attr("transform", "translate(" + (margins.left) + ",0)")
+				.call(yAxis);
+
+			for (let i = 0; i < this.groupData.length && i < 10; i++) {
+				vis.append('svg:path')
+					.attr('d', lineGen(this.groupData[i].hourly, i))
+					.attr('stroke', this.colors[i])
+					.attr('stroke-width', 2)
+					.attr('fill', 'none');
+			}
+
+		},
+		graphTestData: function () {
 
 			// This determines the min/max bounds for the y axis
 			let min = 0;
@@ -286,7 +373,16 @@ let graphApp = new Vue({
 	},
 	watch: {
 		seen: function(value) {
-			if (value) this.graphData();
+			if (value) this.graphData(this.graphBy);
+		},
+		graphBy: function(value) {
+			document.getElementById('sort-by-units').removeAttribute('class');
+			document.getElementById('sort-by-rank').removeAttribute('class');
+			document.getElementById('sort-by-'+value).setAttribute('class', 'active');
+			if (value !== "units" || value !== "rank") {
+				value = "units";
+			}
+			this.graphData(value);
 		}
 	}
 });
@@ -300,12 +396,6 @@ Vue.http.get('http://localhost:3000/sort/teams/score/25/-1/1').then(function(res
 }, function(response) {});
 
 let activeTab = document.getElementById("users-tab");
-let usersSortingBy = "score";
-let teamsSortingBy = "score";
-let usersSortOrder = -1;
-let teamsSortOrder = -1;
-let usersPageNum = 1;
-let teamsPageNum = 1;
 
 document.getElementById("tabs").onclick = function(event) {
 	let tabClicked = event.target.parentElement;
@@ -321,4 +411,16 @@ document.getElementById("tabs").onclick = function(event) {
 
 function hasClass(element, classname) {
 	return document.getElementById(element).className.indexOf(classname) !== -1;
+}
+
+Array.prototype.shuffle = function() {
+	var i = this.length, j, temp;
+	if ( i == 0 ) return this;
+	while ( --i ) {
+		j = Math.floor( Math.random() * ( i + 1 ) );
+		temp = this[i];
+		this[i] = this[j];
+		this[j] = temp;
+	}
+	return this;
 }
