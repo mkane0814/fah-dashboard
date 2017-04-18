@@ -4,7 +4,8 @@ Vue.component('stats-table', {
 		seen: Boolean,
 		group: Array,
 		type: String,
-		sort: Function
+		sort: Function,
+		searchQuery: String
 	}
 });
 
@@ -39,6 +40,13 @@ let usersApp = new Vue({
 					usersApp.users = response.body;
 					usersApp.sortingBy = sortBy;
 			}, function(response) {});
+		},
+
+		search: function(searchFor) {
+			Vue.http.get('http://localhost:3000/find/users/name/' + searchFor)
+				.then(function(response) {
+					usersApp.users = response.body;
+			}, function(response) {});
 		}
 	}
 });
@@ -61,6 +69,13 @@ let teamsApp = new Vue({
 			Vue.http.get('http://localhost:3000/sort/teams/' + sortBy + '/' + limit + '/' + this.sortOrder.toString() + '/1').then(function(response) {
 				teamsApp.teams = response.body;
 				teamsApp.sortingBy = 'score';
+			}, function(response) {});
+		},
+		
+		search: function(searchFor) {
+			Vue.http.get('http://localhost:3000/find/teams/name/' + searchFor)
+				.then(function(response) {
+					usersApp.users = response.body;
 			}, function(response) {});
 		}
 	}
