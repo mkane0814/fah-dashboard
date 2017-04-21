@@ -46,7 +46,7 @@ app.use("/dependencies", express.static(path.dependencies));
  * Use connect method to connect to the Server
  * Api requests for data from mongo are handled in here
  */
-MongoClient.connect(url_db, function(err, db) {
+MongoClient.connect(path.db, function(err, db) {
   assert.equal(null, err);
   	
   	var obj;
@@ -122,7 +122,7 @@ MongoClient.connect(url_db, function(err, db) {
 	});
 
 	//send response if user wants to find a user or team that contains a specified substring
-	app.get('/search/:userOrTeam/:searchVal', function(req, res) {
+	app.get('/search/:userOrTeam/:searchVal/:sortVal/:order/:pageNum', function(req, res) {
 		userOrTeam = req.params.userOrTeam;
 
 		res.header('Access-Control-Allow-Origin', '*');
@@ -130,7 +130,16 @@ MongoClient.connect(url_db, function(err, db) {
 		//search for a name containing anything before and after the substring 
 		var searchVal = ".".concat(req.params.searchVal).concat(".");
 
-		db.collection(userOrTeam).find({"_id.name" : {$regex : searchVal}}).toArray(function(err, obj) {
+		var pageNum = parseInt(req.params.pageNum);
+
+		var sortBy = {};
+		
+		sortBy[req.params.sortVal] = parseInt(req.params.order);
+
+    	//calculate amount to skip to display a specified page
+    	var skipAmt = 25 * (pageNum - 1);
+
+		db.collection(userOrTeam).find({"_id.name" : {$regex : searchVal}}).sort(sortBy).skip(skipAmt).limit(25).toArray(function(err, obj) {
 			if (err) return console.log(err.message);
 
 			res.send(obj);
@@ -198,9 +207,9 @@ MongoClient.connect(url_db, function(err, db) {
   		
 	});
 
-	app.listen(3000, function (){
-		console.log("Listening on port 3000");
-	});
+	//app.listen(3000, function (){
+	//	console.log("Listening on port 3000");
+	//});
 });
 
 
