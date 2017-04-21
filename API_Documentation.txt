@@ -2,16 +2,17 @@ LEADERBOARDS
 
 http://localhost:3000/sort/userOrTeam/sortVal/limit/order/pageNum
 
+What the handler does:
 This get request handler gets top teams or users based on the entered sortVal. 
 
 possible param values:
-
 userOrTeam - teams or users
 sortVal - units, rank, score, rankChange, scoreChange, unitsChange
 limit - a number ex. 25 for top 25
 order - 1(ascending) or -1(descending)
 pageNum - 1,2,3,4... ex. If limit is 25 and pageNum is 2, results will be 26-50
 
+What the handler returns:
 A call to this handler returns an array of JSON objects containing the top users or teams.
 
 -------------------------------------------------------------------------------
@@ -19,14 +20,15 @@ FIND (used when full team name, user name, or rank is known)
 
 http://localhost:3000/find/userOrTeam/findField/findVal
 
+What the handler does:
 This get request handler gets information about a user or team based on a given name, teamid, or rank
 
 possible param values:
-
 userOrTeam - teams or users
 findField - name, teamid, or rank
 findVal - a desired name, teamid, or rank ex. folding@evga
 
+What the handler returns:
 A call to this handler returns a json object containing information about a user or team with the given name, teamid, or rank
 
 -------------------------------------------------------------------------------
@@ -34,23 +36,25 @@ SEARCH (used when a substring of a team or user name is known)
 
 http://localhost:3000/search/userOrTeam/searchVal/sortVal/order/pageNum
 
+What the handler does:
 This get request handler gets information about many teams or users containing a given substring
 
 possible param values:
-
 userOrTeam - teams or users
 findVal - a substring ex. use fold to get all user or team names containing the substring fold
 pageNum - 1,2,3,4... ex. Limit is always 25. If pageNum is 2, results will be 26-50
 order - 1(ascending) or -1(descending)
 sortVal - units, rank, score, rankChange, scoreChange, unitsChange
 
-A call to this handler returns an array of JSON objects. These JSON objects have information about users or teams with containing given substring
+What the handler returns:
+A call to this handler returns an array of JSON objects. These JSON objects have information about users or teams with containing given substring. They are displayed by pages. Each page contains 25 or less entries
 
 -------------------------------------------------------------------------------
 POST (used to get information about a given set of user or team names)
 
 http://localhost:3000/post
 
+What the handler does:
 This post request handler gets information about given names in a json object. 
 
 Example JSON to send:
@@ -66,6 +70,7 @@ Example JSON to send:
 		]
 }
 
-A call to this handler will return an array of JSON objects. Each JSON object in the array will be information about user or team names. Each JSON object's daily field will only contain indexes within the date range
+What the handler returns:
+A call to this handler will return a stringified array of JSON objects. Each JSON object in the array will be information about user or team names. Each JSON object's daily field will only contain indexes within the date range
 
 
