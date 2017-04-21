@@ -32,7 +32,7 @@ A call to this handler returns a json object containing information about a user
 -------------------------------------------------------------------------------
 SEARCH (used when a substring of a team or user name is known)
 
-http://localhost:3000/search/userOrTeam/searchVal
+http://localhost:3000/search/userOrTeam/searchVal/sortVal/order/pageNum
 
 This get request handler gets information about many teams or users containing a given substring
 
@@ -40,6 +40,9 @@ possible param values:
 
 userOrTeam - teams or users
 findVal - a substring ex. use fold to get all user or team names containing the substring fold
+pageNum - 1,2,3,4... ex. Limit is always 25. If pageNum is 2, results will be 26-50
+order - 1(ascending) or -1(descending)
+sortVal - units, rank, score, rankChange, scoreChange, unitsChange
 
 A call to this handler returns an array of JSON objects. These JSON objects have information about users or teams with containing given substring
 
