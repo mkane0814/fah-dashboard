@@ -6,7 +6,8 @@ Vue.component('stats-table', {
 		type: String,
 		sort: Function,
 		query: String,
-		search: Function
+		search: Function,
+		select: Function
 	}
 });
 
@@ -29,6 +30,7 @@ let usersApp = new Vue({
 	data: {
 		seen: true,
 		users: [],
+		selectedUsers: [],
 		sortingBy: 'score',
 		sortOrder: -1,
 		query: ""
@@ -57,6 +59,11 @@ let usersApp = new Vue({
 						loader.message = ("No users found with name: " + searchFor);
 					}
 			}, function(response) {});
+		},
+
+		select: function(selection) {
+			if (usersApp.selectedUsers.length < 10)
+				usersApp.selectedUsers.push(selection);
 		}
 	}
 });
@@ -66,6 +73,7 @@ let teamsApp = new Vue({
 	data: {
 		seen: false,
 		teams: [],
+		selectedTeams: [],
 		sortingBy: 'score',
 		sortOrder: -1,
 		query: ""
@@ -92,6 +100,11 @@ let teamsApp = new Vue({
 						loader.message = ("No teams found with name: " + searchFor);
 					}
 			}, function(response) {});
+		},
+
+		select: function(selection) {
+			if (teamsApp.selectedTeams.length < 10)
+				teamsApp.selectedTeams.push(selection);
 		}
 	}
 });
