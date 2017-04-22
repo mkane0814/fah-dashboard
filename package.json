@@ -30,16 +30,21 @@
   },
   "homepage": "https://github.com/devgr/fah-dashboard#readme",
   "dependencies": {
-    "mongoose" : "latest",
-    "body-parser" : "latest",
-    "vue-router"  : "latest",
-    "json-concat" : "latest",
     "async": "^2.1.5",
+    "body-parser": "latest",
     "d3": "latest",
     "express": "^4.15.2",
+    "json-concat": "latest",
+    "moment": "^2.18.1",
     "mongodb": "^2.2.24",
+    "mongoose": "latest",
     "node-cron": "^1.1.3",
     "vue": "latest",
-    "vue-resource": "latest"
+    "vue-date": "^1.1.5",
+    "vue-date-picker": "^1.0.2",
+    "vue-datepicker": "^1.3.0",
+    "vue-resource": "latest",
+    "vue-router": "latest",
+    "vue-spinner": "^1.0.2"
   }
 }

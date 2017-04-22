@@ -5,7 +5,8 @@ Vue.component('stats-table', {
 		group: Array,
 		type: String,
 		sort: Function,
-		searchQuery: String
+		query: String,
+		search: Function
 	}
 });
 
@@ -15,8 +16,10 @@ Vue.component('graph', {
 		seen: Boolean,
 		colors: Array,
 		graphBy: String,
-		setgb: Function
-	}
+		setgb: Function,
+		range: Array
+	},
+	components: { datepicker }
 });
 
 const limit = 25;
@@ -27,7 +30,8 @@ let usersApp = new Vue({
 		seen: true,
 		users: [],
 		sortingBy: 'score',
-		sortOrder: -1
+		sortOrder: -1,
+		query: ""
 	},
 	methods: {
 		sort: function(sortBy) {
@@ -43,11 +47,15 @@ let usersApp = new Vue({
 					usersApp.sortingBy = sortBy;
 			}, function(response) {});
 		},
-
 		search: function(searchFor) {
-			Vue.http.get('http://localhost:3000/find/users/name/' + searchFor)
+			loader.loading("Searching for users matching: " + searchFor);
+			Vue.http.get('http://localhost:3000/search/users/' + searchFor, {timeout: 3000})
 				.then(function(response) {
+					loader.done();
 					usersApp.users = response.body;
+					if (response.body.length === 0) {
+						loader.message = ("No users found with name: " + searchFor);
+					}
 			}, function(response) {});
 		}
 	}
@@ -59,7 +67,8 @@ let teamsApp = new Vue({
 		seen: false,
 		teams: [],
 		sortingBy: 'score',
-		sortOrder: -1
+		sortOrder: -1,
+		query: ""
 	},
 	methods: {
 		sort: function(sortBy) {
@@ -73,11 +82,15 @@ let teamsApp = new Vue({
 				teamsApp.sortingBy = 'score';
 			}, function(response) {});
 		},
-		
 		search: function(searchFor) {
-			Vue.http.get('http://localhost:3000/find/teams/name/' + searchFor)
+			loader.loading("Searching for teams matching: " + searchFor);
+			Vue.http.get('http://localhost:3000/search/teams/' + searchFor)
 				.then(function(response) {
-					usersApp.users = response.body;
+					loader.done();
+					teamsApp.teams = response.body;
+					if (response.body.length === 0) {
+						loader.message = ("No teams found with name: " + searchFor);
+					}
 			}, function(response) {});
 		}
 	}
@@ -85,9 +98,11 @@ let teamsApp = new Vue({
 
 let graphApp = new Vue({
 	el: '#graph',
+	components: { datepicker },
 	data: {
 		seen: false,
 		groupData: [],
+		dateRange: [moment().subtract(7, 'days').format('YYYY-MM-DD'), moment().format('YYYY-MM-DD')],
 		testdata: [
 			{
 				"_id":{
@@ -208,16 +223,16 @@ let graphApp = new Vue({
 				"daily":[]
 			}
 		],
-		colors: ["orangered",
-				 "seagreen",
-				 "steelblue",
-				 "springgreen",
-				 "tomato",
-				 "darkorchid",
-				 "gold",
-				 "lightseagreen",
-				 "crimson",
-				 "cornflowerblue"],
+		colors: ["#60BD68",
+				 "#5DA5DA",
+				 "#F15854",
+				 "#FAA43A",
+				 "#F17CB0",
+				 "#504FFF",
+				 "#B28A2F",
+				 "#B276B2",
+				 "#DECF3F",
+				 "#4D4D4D"],
 		graphBy: "units"
 	},
 	methods: {
@@ -228,7 +243,6 @@ let graphApp = new Vue({
 
 			d3.selectAll('svg > *').remove();
 
-			this.groupData = this.testdata;
 			let minY = 0;
 			let maxY = 0;
 
@@ -393,8 +407,9 @@ let graphApp = new Vue({
 		graphBy: function(value) {
 			document.getElementById('sort-by-units').removeAttribute('class');
 			document.getElementById('sort-by-rank').removeAttribute('class');
+			document.getElementById('sort-by-score').removeAttribute('class');
 			document.getElementById('sort-by-'+value).setAttribute('class', 'active');
-			if (value !== "units" || value !== "rank") {
+			if (value !== "units" || value !== "rank" || value !== "score") {
 				value = "units";
 			}
 			this.graphData(value);
@@ -409,6 +424,27 @@ Vue.http.get('http://localhost:3000/sort/users/score/25/-1/1').then(function(res
 Vue.http.get('http://localhost:3000/sort/teams/score/25/-1/1').then(function(response) {
 	teamsApp.teams = response.body;
 }, function(response) {});
+
+let data = {
+	"fromDate": new Date(graphApp.dateRange[0]),
+	"toDate": new Date(graphApp.dateRange[1]),
+	"type": "users",
+	"names": [
+		"Curecoin",
+		"BOLTZ",
+		"Fryslan",
+		"!8!-YKN-!8!",
+		"#xvid"
+	]
+};
+
+Vue.http.post('http://localhost:3000/post', data)
+	.then(function(response) {
+		if (response!== null && response.body !== null) {
+			graphApp.groupData = response.body;
+		}
+		return;
+	});
 
 let activeTab = document.getElementById("users-tab");
 
@@ -428,14 +464,28 @@ function hasClass(element, classname) {
 	return document.getElementById(element).className.indexOf(classname) !== -1;
 }
 
-Array.prototype.shuffle = function() {
-	var i = this.length, j, temp;
-	if ( i == 0 ) return this;
-	while ( --i ) {
-		j = Math.floor( Math.random() * ( i + 1 ) );
-		temp = this[i];
-		this[i] = this[j];
-		this[j] = temp;
+let RingLoader = VueSpinner.RingLoader;
+let loader = new Vue({
+	el: "#loader",
+	components: {
+		RingLoader
+	},
+	data: {
+		color: '#FE6B22',
+		size: '32px',
+		margin: '2px',
+		radius: '100%',
+		isLoading: false,
+		message: ""
+	},
+	methods: {
+		loading: function(message = "") {
+			this.isLoading = true;
+			this.message = message;
+		},
+		done: function() {
+			this.isLoading = false;
+			this.message = "";
+		}
 	}
-	return this;
-}
+});

@@ -46,13 +46,12 @@ app.use("/dependencies", express.static(path.dependencies));
  * Use connect method to connect to the Server
  * Api requests for data from mongo are handled in here
  */
-MongoClient.connect(url_db, function(err, db) {
+MongoClient.connect(path.db, function(err, db) {
   assert.equal(null, err);
   	
-  	var obj;
-  	var userOrTeam;
-  	var limit;
-  	var findField;
+  	let userOrTeam;
+  	let limit;
+  	let findField;
 
 	//parse application/json for recieving post requests
 	app.use(bodyParser.json());
@@ -63,13 +62,13 @@ MongoClient.connect(url_db, function(err, db) {
     	limit = parseInt(req.params.limit);
 		res.header('Access-Control-Allow-Origin', '*');
     	
-		var sortBy = {};
+		let sortBy = {};
 		
 		sortBy[req.params.sortVal] = parseInt(req.params.order);
-		var pageNum = parseInt(req.params.pageNum);
+		let pageNum = parseInt(req.params.pageNum);
 
     	//calculate amount to skip to display a specified page
-    	var skipAmt = limit * (pageNum - 1);
+    	let skipAmt = limit * (pageNum - 1);
 
     	//query top teams or users on a page then send a response as an object
 	    db.collection(userOrTeam).find().sort(sortBy).skip(skipAmt).limit(limit).toArray(function(err, obj) {
@@ -88,10 +87,10 @@ MongoClient.connect(url_db, function(err, db) {
 		res.header('Access-Control-Allow-Origin', '*');
 
 		//findVal could be a name, teamID, or rank
-		var findVal = req.params.findVal;
+		let findVal = req.params.findVal;
 		findField = req.params.findField.toLowerCase();
 
-		if(findField == "name")
+		if(findField === "name")
 		{
 			//search for name
 	    	db.collection(userOrTeam).findOne({"_id.name" : findVal }, function(err, obj) {
@@ -100,7 +99,7 @@ MongoClient.connect(url_db, function(err, db) {
 				res.send(obj);
 			});
     	}
-    	else if(findField == "teamid")
+    	else if(findField === "teamid")
     	{
     		//search for teamID
     		db.collection(userOrTeam).findOne({"_id.teamID" : findVal}, function(err, obj) {
@@ -109,7 +108,7 @@ MongoClient.connect(url_db, function(err, db) {
 				res.send(obj);
 			});
     	}
-    	else if(findField == "rank")
+    	else if(findField === "rank")
     	{
     		//search for rank
     		db.collection(userOrTeam).findOne({rank : parseInt(findVal)}, function(err, obj) {
@@ -128,7 +127,7 @@ MongoClient.connect(url_db, function(err, db) {
 		res.header('Access-Control-Allow-Origin', '*');
 
 		//search for a name containing anything before and after the substring 
-		var searchVal = ".".concat(req.params.searchVal).concat(".");
+		let searchVal = ".".concat(req.params.searchVal).concat(".");
 
 		db.collection(userOrTeam).find({"_id.name" : {$regex : searchVal}}).toArray(function(err, obj) {
 			if (err) return console.log(err.message);
@@ -143,18 +142,18 @@ MongoClient.connect(url_db, function(err, db) {
   		
   		userOrTeam = String(req.body.type);
   		
-  		var arr = req.body.names;
-  		var arrToSend = [];
+  		let arr = req.body.names;
+  		let arrToSend = [];
   		res.header('Access-Control-Allow-Origin', '*');
 
   		//parse the dates from post request
-  		var fromDate = Date.parse(req.body.fromDate);
-  		var toDate = Date.parse(req.body.toDate);
+  		let fromDate = Date.parse(req.body.fromDate);
+  		let toDate = Date.parse(req.body.toDate);
 
-  		var dailyArr;
-  		var updatedDailyArr = [];
-  		var i;
-  		var curDate;
+  		let dailyArr;
+  		let updatedDailyArr = [];
+  		let i;
+		let curDate;
 
   		async.forEach(Object.keys(arr), function (item, callback){ 
 
@@ -196,10 +195,6 @@ MongoClient.connect(url_db, function(err, db) {
     		res.send(arrToSend);
 		}); 
   		
-	});
-
-	app.listen(3000, function (){
-		console.log("Listening on port 3000");
 	});
 });
 

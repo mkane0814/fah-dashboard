@@ -24,3 +24,14 @@ a:focus, a:hover {
 /*body {
     background-color: var(--foldingDarkGrey);
 }*/
+
+.container {
+    width: 95%;
+}
+
+.datepicker {
+    width: 220px;
+    display: flex;
+    justify-content: space-around;
+    float: right;
+}
