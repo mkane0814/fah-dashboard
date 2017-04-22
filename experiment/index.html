@@ -57,7 +57,7 @@
 							<td>{{ one.scoreChange }}</td>
 							<td>{{ one.rankChange }}</td>
 							<td>{{ one.unitsChange }}</td>
-							<td><a href="#"><span class="glyphicon glyphicon-plus"></span></a></td>
+							<td><a href="#" @click="select(one)"><span class="glyphicon glyphicon-plus"></span></a></td>
 						</tr>
 					</tbody>
 				</table>
@@ -86,8 +86,8 @@
 					<li id="graph-tab"><a href="#">Graph</a></li>
 				</ul>
 
-				<stats-table v-show="seen" id="users-table" :group='users' type="users" :sort="sort"></stats-table>
-				<stats-table v-show="seen" id="teams-table" :group='teams' type="teams" :sort="sort"></stats-table>
+				<stats-table v-show="seen" id="users-table" :group='users' type="users" :sort="sort" :select="select"></stats-table>
+				<stats-table v-show="seen" id="teams-table" :group='teams' type="teams" :sort="sort" :select="select"></stats-table>
 				<graph v-show="seen" id="graph" :colors="colors" :setgb="setGraphBy"></graph>
 			</div>
 		</div>

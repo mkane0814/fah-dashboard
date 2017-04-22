@@ -5,7 +5,8 @@ Vue.component('stats-table', {
 		group: Array,
 		type: String,
 		sort: Function,
-		searchQuery: String
+		search: Function,
+		select: Function
 	}
 });
 
@@ -26,6 +27,7 @@ let usersApp = new Vue({
 	data: {
 		seen: true,
 		users: [],
+		selectedUsers: [],
 		sortingBy: 'score',
 		sortOrder: -1
 	},
@@ -49,6 +51,11 @@ let usersApp = new Vue({
 				.then(function(response) {
 					usersApp.users = response.body;
 			}, function(response) {});
+		},
+
+		select: function(selection) {
+			if (usersApp.selectedUsers.length < 10)
+				usersApp.selectedUsers.push(selection);
 		}
 	}
 });
@@ -58,6 +65,7 @@ let teamsApp = new Vue({
 	data: {
 		seen: false,
 		teams: [],
+		selectedTeams: [],
 		sortingBy: 'score',
 		sortOrder: -1
 	},
@@ -79,6 +87,11 @@ let teamsApp = new Vue({
 				.then(function(response) {
 					usersApp.users = response.body;
 			}, function(response) {});
+		},
+
+		select: function(selection) {
+			if (teamsApp.selectedTeams.length < 10)
+				teamsApp.selectedTeams.push(selection);
 		}
 	}
 });
