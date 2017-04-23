@@ -126,8 +126,8 @@ MongoClient.connect(path.db, function(err, db) {
 
 		res.header('Access-Control-Allow-Origin', '*');
 
-		//search for a name containing anything before and after the substring 
-		let searchVal = ".".concat(req.params.searchVal).concat(".");
+		//search for a name containing anything before and after the substring
+		let searchVal = ".*"+req.params.searchVal+".*";
 
 		var pageNum = parseInt(req.params.pageNum);
 
