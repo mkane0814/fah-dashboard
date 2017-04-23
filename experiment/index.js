@@ -7,7 +7,8 @@ Vue.component('stats-table', {
 		sort: Function,
 		query: String,
 		search: Function,
-		select: Function
+		select: Function,
+		graph: Function
 	}
 });
 
@@ -64,6 +65,28 @@ let usersApp = new Vue({
 		select: function(selection) {
 			if (usersApp.selectedUsers.length < 10)
 				usersApp.selectedUsers.push(selection);
+		},
+
+		graph: function() {
+			let data = {
+				"fromDate": new Date(graphApp.dateRange[0]),
+				"toDate": new Date(graphApp.dateRange[1]),
+				"type": "users",
+				"names": this.selectedUsers
+			};
+
+			Vue.http.post('http://localhost:3000/post', data)
+				.then(function(response) {
+					graphApp.groupData = [];
+					if (response!== null && response.body !== null) {
+						for (group of response.body) {
+							if (group !== null) {
+								graphApp.groupData.push(group);
+							}
+						}
+					}
+					return;
+				});
 		}
 	}
 });
@@ -104,7 +127,30 @@ let teamsApp = new Vue({
 
 		select: function(selection) {
 			if (teamsApp.selectedTeams.length < 10)
-				teamsApp.selectedTeams.push(selection);
+				teamsApp.selectedTeams.push(selection._id.name);
+			alert(JSON.stringify(teamsApp.selectedTeams))
+		},
+
+		graph: function() {
+			let data = {
+				"fromDate": new Date(graphApp.dateRange[0]),
+				"toDate": new Date(graphApp.dateRange[1]),
+				"type": "teams",
+				"names": this.selectedTeams
+			};
+
+			Vue.http.post('http://localhost:3000/post', data)
+				.then(function(response) {
+					graphApp.groupData = [];
+					if (response!== null && response.body !== null) {
+						for (group of response.body) {
+							if (group !== null) {
+								graphApp.groupData.push(group);
+							}
+						}
+					}
+					return;
+				});
 		}
 	}
 });

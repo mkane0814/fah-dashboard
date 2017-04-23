@@ -37,6 +37,9 @@
 							</th>
 							<th colspan="3">Change in Past 24 Hours</th>
 							<th rowspan="2">Add</th>
+							<th colspan="3">
+								<a href="#" @click="graph()">Graph</a>
+							</th>
 						</tr>
 						<tr>
 							<th id="scoreChange">
@@ -95,8 +98,8 @@
 					<li id="graph-tab"><a href="#">Graph</a></li>
 				</ul>
 
-				<stats-table v-show="seen" id="users-table" :group='users' type="users" :sort="sort" :search="search" :select="select"></stats-table>
-				<stats-table v-show="seen" id="teams-table" :group='teams' type="teams" :sort="sort" :search="search" :select="select"></stats-table>
+				<stats-table v-show="seen" id="users-table" :group='users' type="users" :sort="sort" :search="search" :select="select" :graph="graph"></stats-table>
+				<stats-table v-show="seen" id="teams-table" :group='teams' type="teams" :sort="sort" :search="search" :select="select" :graph="graph"></stats-table>
 				<graph v-show="seen" id="graph" :colors="colors" :setgb="setGraphBy" :range="dateRange"></graph>
 			</div>
 		</div>
