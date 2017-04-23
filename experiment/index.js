@@ -51,7 +51,7 @@ let usersApp = new Vue({
 		},
 		search: function(searchFor) {
 			loader.loading("Searching for users matching: " + searchFor);
-			Vue.http.get('http://localhost:3000/search/users/' + searchFor, {timeout: 3000})
+			Vue.http.get('http://localhost:3000/search/users/' + searchFor + '/rank/' + this.sortOrder.toString() + '/1', {timeout: 3000})
 				.then(function(response) {
 					loader.done();
 					usersApp.users = response.body;
@@ -92,7 +92,7 @@ let teamsApp = new Vue({
 		},
 		search: function(searchFor) {
 			loader.loading("Searching for teams matching: " + searchFor);
-			Vue.http.get('http://localhost:3000/search/teams/' + searchFor)
+			Vue.http.get('http://localhost:3000/search/teams/' + searchFor + '/rank/' + this.sortOrder.toString() + '/1', {timeout: 3000}):
 				.then(function(response) {
 					loader.done();
 					teamsApp.teams = response.body;
@@ -259,8 +259,13 @@ let graphApp = new Vue({
 			let minY = 0;
 			let maxY = 0;
 
-			let minDate = new Date(this.groupData[0].hourly[0].date);
-			let maxDate = new Date(this.groupData[0].hourly[0].date);
+			let minDate = new Date();
+			let maxDate = new Date();
+
+			if (this.groupData[0]) {
+				let minDate = new Date(this.groupData[0].hourly[0].date);
+				let maxDate = new Date(this.groupData[0].hourly[0].date);
+			}
 
 			for (let i = 0; i < this.groupData.length; i++) {
 				for (let j = 0; j < this.groupData[i].hourly.length; j++) {
