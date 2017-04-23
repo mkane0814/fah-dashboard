@@ -170,7 +170,10 @@ MongoClient.connect(path.db, function(err, db) {
 				if (err) return console.log(err.message);
 
 				//assign daily object to the current user or team's daily field
-				dailyArr = obj.daily;
+                    if (obj != null && obj.daily != null)
+				     dailyArr = obj.daily;
+                    else
+                         dailyArr = [];
 
 				//iterate until a date is found within the range
 				for(i = 0; i < dailyArr.length; i++)
@@ -186,7 +189,8 @@ MongoClient.connect(path.db, function(err, db) {
 				updatedDailyArr = dailyArr.splice(i, dailyArr.length);
 
 				//update daily field with new daily array
-				obj.daily = updatedDailyArr;
+                    if (obj != null && obj.daily != null)
+				     obj.daily = updatedDailyArr;
 
 				//add the newly queried object to the array
 				arrToSend.push(obj);
