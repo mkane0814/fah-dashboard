@@ -31,7 +31,10 @@ a:focus, a:hover {
 
 .datepicker {
     width: 220px;
-    display: flex;
-    justify-content: space-around;
-    float: right;
+}
+
+.options {
+	dsiplay: flex;
+	float: right;
+	justify-content: space-around;
 }

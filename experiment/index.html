@@ -77,7 +77,10 @@
 					<li id="sort-by-score" @click="setgb('score')"><a href="#">Score</a></li>
 				</ul>
 				<svg id="visualization" height="500" width="1000"></svg>
-				<datepicker class="datepicker" min="2017-01-01" v-model="range" :range="true"></datepicker>
+				<div class="options">
+					<h5>Select Date Range</h5>
+					<datepicker class="datepicker" min="2017-01-01" v-model="range" :range="true"></datepicker>
+				</div>
 
 			</div>
 		</script>

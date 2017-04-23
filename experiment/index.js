@@ -52,7 +52,7 @@ let usersApp = new Vue({
 		},
 		search: function(searchFor) {
 			loader.loading("Searching for users matching: " + searchFor);
-			Vue.http.get('http://localhost:3000/search/users/' + searchFor + '/rank/' + this.sortOrder.toString() + '/1', {timeout: 3000})
+			Vue.http.get('http://localhost:3000/search/users/' + searchFor + '/rank/1/1', {timeout: 3000})
 				.then(function(response) {
 					loader.done();
 					usersApp.users = response.body;
@@ -115,7 +115,7 @@ let teamsApp = new Vue({
 		},
 		search: function(searchFor) {
 			loader.loading("Searching for teams matching: " + searchFor);
-			Vue.http.get('http://localhost:3000/search/teams/' + searchFor + '/rank/' + this.sortOrder.toString() + '/1', {timeout: 3000})
+			Vue.http.get('http://localhost:3000/search/teams/' + searchFor + '/rank/1/1', {timeout: 3000})
 				.then(function(response) {
 					loader.done();
 					teamsApp.teams = response.body;
