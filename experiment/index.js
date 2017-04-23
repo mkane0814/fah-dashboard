@@ -458,8 +458,13 @@ let data = {
 
 Vue.http.post('http://localhost:3000/post', data)
 	.then(function(response) {
+		graphApp.groupData = [];
 		if (response!== null && response.body !== null) {
-			graphApp.groupData = response.body;
+			for (group of response.body) {
+				if (group !== null) {
+					graphApp.groupData.push(group);
+				}
+			}
 		}
 		return;
 	});
