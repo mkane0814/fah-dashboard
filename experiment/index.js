@@ -8,7 +8,9 @@ Vue.component('stats-table', {
 		query: String,
 		search: Function,
 		select: Function,
-		graph: Function
+		remove: Function,
+		graph: Function,
+		selected: Array
 	}
 });
 
@@ -64,7 +66,12 @@ let usersApp = new Vue({
 
 		select: function(selection) {
 			if (usersApp.selectedUsers.length < 10)
-				usersApp.selectedUsers.push(selection);
+				usersApp.selectedUsers.push(selection._id.name);
+		},
+		
+		remove: function(selection) {
+			let index = usersApp.selectedUsers.indexOf(selection);
+			usersApp.selectedUsers.splice(index, 1);
 		},
 
 		graph: function() {
@@ -128,7 +135,11 @@ let teamsApp = new Vue({
 		select: function(selection) {
 			if (teamsApp.selectedTeams.length < 10)
 				teamsApp.selectedTeams.push(selection._id.name);
-			alert(JSON.stringify(teamsApp.selectedTeams))
+		},
+		
+		remove: function(selection) {
+			let index = teamsApp.selectedTeams.indexOf(selection);
+			teamsApp.selectedTeams.splice(index, 1);
 		},
 
 		graph: function() {
