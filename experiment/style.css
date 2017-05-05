@@ -25,16 +25,16 @@ a:focus, a:hover {
     background-color: var(--foldingDarkGrey);
 }*/
 
-.container {
-    width: 95%;
-}
-
 .datepicker {
     width: 220px;
 }
 
+.container {
+	width: 95%
+}
+
 .options {
-	dsiplay: flex;
+	display: flex;
 	float: right;
 	justify-content: space-around;
 }
